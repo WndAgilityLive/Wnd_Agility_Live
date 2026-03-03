@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Agility Live — Seleziona Gara</title>
+  <style>
+    body{font-family:system-ui,Arial;margin:16px;max-width:900px}
+    .card{border:1px solid #e6e6e6;border-radius:16px;padding:14px;margin-top:14px}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    label{font-size:14px;opacity:.8}
+    input,select{padding:10px 12px;border:1px solid #ddd;border-radius:12px;font-size:15px}
+    .btn{border:1px solid #ddd;border-radius:12px;padding:10px 14px;background:#fff;cursor:pointer}
+    .btn.primary{border-color:#111}
+    .muted{opacity:.7}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+    img{max-width:260px;border:1px solid #eee;border-radius:12px}
+  </style>
+</head>
+<body>
+  <h2>Agility Live</h2>
+  <div class="muted">Genera il link e il QR per i partecipanti.</div>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <label>Data</label><br/>
+        <input id="date" type="date" />
+      </div>
+      <div>
+        <label>Tipo evento</label><br/>
+        <input id="event" type="text" placeholder="agility1" />
+      </div>
+      <div>
+        <label>Categoria</label><br/>
+        <select id="cat">
+          <option value="small">small</option>
+          <option value="medium1">medium1</option>
+          <option value="medium2">medium2</option>
+          <option value="large">large</option>
+        </select>
+      </div>
+      <div style="align-self:flex-end">
+        <button class="btn primary" id="gen">Genera</button>
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <div class="muted">Nome gara (formato richiesto):</div>
+      <div class="mono" id="garaName">—</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <div>
+        <div class="muted">Link partecipanti:</div>
+        <div class="mono" id="liveUrl" style="word-break:break-all">—</div>
+      </div>
+      <div>
+        <button class="btn" id="copy" disabled>Copia link</button>
+        <button class="btn" id="open" disabled>Apri</button>
+      </div>
+    </div>
+
+    <div style="margin-top:14px" class="row">
+      <div>
+        <div class="muted">QR Code:</div>
+        <img id="qr" alt="QR" />
+        <div class="muted" style="margin-top:6px;font-size:13px">
+          Suggerimento: stampa questo QR e mettilo in bacheca.
+        </div>
+      </div>
+
+      <div style="flex:1;min-width:240px">
+        <div class="muted">Note</div>
+        <ul class="muted" style="margin-top:6px">
+          <li>Il sito mostra dati solo se l’ESP32 invia la stessa <b>gara</b> e <b>cat</b> all’API.</li>
+          <li>Se cambi nome gara o categoria, rigenera anche i QR.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const $ = (id)=>document.getElementById(id);
+
+  (function init(){
+    const d = new Date();
+    const pad = (n)=>String(n).padStart(2,'0');
+    const iso = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    $("date").value = iso;
+    $("event").value = "agility1";
+    $("qr").src = "";
+  })();
+
+  function formatDDMMYYYY(iso){
+    if(!iso || !iso.includes("-")) return "";
+    const [y,m,d] = iso.split("-");
+    return `${d}-${m}-${y}`;
+  }
+
+  function build(){
+    const isoDate = $("date").value.trim();
+    const ev = $("event").value.trim().replace(/\s+/g," ");
+    const cat = $("cat").value.trim();
+    if(!isoDate || !ev || !cat) return null;
+
+    const gara = `${formatDDMMYYYY(isoDate)} ${ev} ${cat}`.trim();
+
+    const base = new URL(location.href);
+    base.pathname = base.pathname.replace(/\/[^\/]*$/, "/");
+    const live = new URL("live/", base);
+    live.searchParams.set("gara", gara);
+    live.searchParams.set("cat", cat);
+    return {gara, cat, liveUrl: live.toString()};
+  }
+
+  function setUI(obj){
+    $("garaName").textContent = obj ? obj.gara : "—";
+    $("liveUrl").textContent = obj ? obj.liveUrl : "—";
+    $("copy").disabled = !obj;
+    $("open").disabled = !obj;
+    $("qr").src = obj ? `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(obj.liveUrl)}` : "";
+  }
+
+  $("gen").addEventListener("click", ()=> setUI(build()));
+
+  $("copy").addEventListener("click", async ()=>{
+    const obj = build();
+    if(!obj) return;
+    try{
+      await navigator.clipboard.writeText(obj.liveUrl);
+      $("copy").textContent = "Copiato!";
+      setTimeout(()=> $("copy").textContent = "Copia link", 900);
+    }catch(e){
+      alert("Copia non disponibile su questo browser. Seleziona e copia manualmente il link.");
+    }
+  });
+
+  $("open").addEventListener("click", ()=>{
+    const obj = build();
+    if(!obj) return;
+    window.open(obj.liveUrl, "_blank");
+  });
+
+  setUI(build());
+</script>
+</body>
+</html>

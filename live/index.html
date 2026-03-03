@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Classifiche Live</title>
+  <style>
+    body{font-family:system-ui,Arial;margin:16px;max-width:1100px}
+    .top{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .pill{padding:6px 10px;border:1px solid #ddd;border-radius:999px}
+    .muted{opacity:.7}
+    .grid{display:grid;grid-template-columns:1fr;gap:16px;margin-top:14px}
+    @media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    th,td{border-bottom:1px solid #eee;padding:8px;text-align:left}
+    th{position:sticky;top:0;background:#fff}
+    .box{border:1px solid #e6e6e6;border-radius:14px;padding:12px}
+    .h{font-weight:700;margin:0 0 8px}
+    .btn{border:1px solid #ddd;border-radius:10px;padding:8px 12px;background:#fff;cursor:pointer}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    input{padding:8px 10px;border:1px solid #ddd;border-radius:10px}
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div class="pill"><b>Gara:</b> <span id="gara">-</span></div>
+    <div class="pill"><b>Categoria:</b> <span id="cat">-</span></div>
+    <div class="pill muted">Aggiornato: <span id="upd">-</span></div>
+    <button class="btn" id="refreshBtn">Aggiorna</button>
+    <input id="q" placeholder="Cerca pettorale/nome..." />
+  </div>
+
+  <div class="grid">
+    <div class="box">
+      <p class="h">Prossimi a partire</p>
+      <table>
+        <thead><tr><th>#</th><th>Pett.</th><th>Conduttore</th><th>Cane</th></tr></thead>
+        <tbody id="nextTb"><tr><td colspan="4" class="muted">In attesa...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="box">
+      <p class="h">Classifica provvisoria</p>
+      <table>
+        <thead><tr><th>Pos</th><th>Pett.</th><th>Conduttore</th><th>Cane</th><th>Tempo</th><th>Err</th><th>Rif</th><th>Stato</th></tr></thead>
+        <tbody id="rankTb"><tr><td colspan="8" class="muted">In attesa...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="box" style="margin-top:16px">
+    <p class="h">Ordine di partenza completo</p>
+    <table>
+      <thead><tr><th>#</th><th>Pett.</th><th>Conduttore</th><th>Cane</th></tr></thead>
+      <tbody id="startTb"><tr><td colspan="4" class="muted">In attesa...</td></tr></tbody>
+    </table>
+  </div>
+
+<script>
+  // URL Apps Script /exec
+  const API_BASE = "https://script.google.com/macros/s/AKfycbyLd3I3NkEacSU-wDbIhncpI4yZ7pPZz4fpqasi5Fud2whN8tdJbDhFdXB-TRGuvreKyw/exec";
+
+  const $ = (id)=>document.getElementById(id);
+
+  function qs(name){
+    const u = new URL(location.href);
+    return (u.searchParams.get(name)||"").trim();
+  }
+
+  const gara = qs("gara");
+  const cat  = qs("cat");
+  $("gara").textContent = gara || "-";
+  $("cat").textContent  = cat  || "-";
+
+  let cache = { startlist:[], ranking:[] };
+
+  function norm(s){ return String(s||"").toLowerCase(); }
+  function matchRow(row, q){
+    if(!q) return true;
+    const t = norm(row.bib)+" "+norm(row.conduttore)+" "+norm(row.cane);
+    return t.includes(q);
+  }
+
+  function esc(s){
+    return String(s??"").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  function render(){
+    const q = norm($("q").value);
+
+    const start = (cache.startlist||[]).slice().sort((a,b)=>Number(a.ord||0)-Number(b.ord||0));
+    const startF = start.filter(r=>matchRow(r,q));
+
+    const rank = (cache.ranking||[]).slice().sort((a,b)=>Number(a.pos||0)-Number(b.pos||0));
+    const rankF = rank.filter(r=>matchRow(r,q));
+
+    const next = startF.slice(0,10);
+
+    $("startTb").innerHTML = startF.length
+      ? startF.map(r=>`<tr><td>${r.ord||""}</td><td>${r.bib||""}</td><td>${esc(r.conduttore)}</td><td>${esc(r.cane)}</td></tr>`).join("")
+      : `<tr><td colspan="4" class="muted">Nessun dato</td></tr>`;
+
+    $("nextTb").innerHTML = next.length
+      ? next.map(r=>`<tr><td>${r.ord||""}</td><td>${r.bib||""}</td><td>${esc(r.conduttore)}</td><td>${esc(r.cane)}</td></tr>`).join("")
+      : `<tr><td colspan="4" class="muted">Nessun dato</td></tr>`;
+
+    $("rankTb").innerHTML = rankF.length
+      ? rankF.map(r=>`<tr>
+          <td>${r.pos||""}</td><td>${r.bib||""}</td><td>${esc(r.conduttore)}</td><td>${esc(r.cane)}</td>
+          <td>${esc(r.time)}</td><td>${r.err||""}</td><td>${r.ref||""}</td><td>${esc(r.stato)}</td>
+        </tr>`).join("")
+      : `<tr><td colspan="8" class="muted">Nessun dato</td></tr>`;
+  }
+
+  async function load(){
+    if(!gara || !cat){
+      $("upd").textContent = "Manca gara/cat nell'URL";
+      return;
+    }
+    const url = `${API_BASE}?gara=${encodeURIComponent(gara)}&cat=${encodeURIComponent(cat)}&t=${Date.now()}`;
+    $("refreshBtn").disabled = true;
+    try{
+      const res = await fetch(url, {cache:"no-store"});
+      const j = await res.json();
+      cache.startlist = j.startlist || [];
+      cache.ranking   = j.ranking   || [];
+      $("upd").textContent = j.serverTime ? new Date(j.serverTime).toLocaleString() : new Date().toLocaleString();
+      render();
+    }catch(e){
+      $("upd").textContent = "Errore caricamento";
+    }finally{
+      $("refreshBtn").disabled = false;
+    }
+  }
+
+  $("refreshBtn").addEventListener("click", load);
+  $("q").addEventListener("input", render);
+
+  load();
+  setInterval(load, 8000);
+</script>
+</body>
+</html>
