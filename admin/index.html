@@ -1,1 +1,762 @@
+<!-- admin/index.html -->
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>D.S. CronoAgility — Admin</title>
+  <style>
+    :root{
+      --bg0:#070A12; --bg1:#0B1020;
+      --stroke:rgba(255,255,255,.10);
+      --stroke2:rgba(255,255,255,.16);
+      --text:#EAF0FF;
+      --muted:rgba(234,240,255,.72);
+      --muted2:rgba(234,240,255,.55);
+      --accent:#58D6FF;
+      --good:#2DE38A;
+      --bad:#FF4D6D;
+      --warn:#FFD166;
+      --shadow: 0 18px 40px rgba(0,0,0,.45);
+      --r16:16px; --r22:22px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color:var(--text);
+      background:
+        radial-gradient(900px 500px at 20% 10%, rgba(88,214,255,.16), transparent 60%),
+        radial-gradient(900px 500px at 80% 20%, rgba(108,124,255,.14), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      min-height:100vh;
+    }
+    .wrap{max-width:1180px;margin:0 auto;padding:16px}
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+      padding:14px;
+      border:1px solid var(--stroke);
+      border-radius: var(--r22);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:44px;height:44px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background: rgba(255,255,255,.06);overflow:hidden}
+    .logo img{width:100%;height:100%;object-fit:cover}
+    .titles{display:flex;flex-direction:column;gap:2px}
+    .titles .t{font-weight:950;letter-spacing:.2px;font-size:18px}
+    .titles .s{color:var(--muted);font-size:12.5px}
+    .badge{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;border:1px solid var(--stroke2);background: rgba(255,255,255,.05);color:var(--muted);font-size:12px}
+    .dot{width:8px;height:8px;border-radius:99px;background:var(--muted2);box-shadow:0 0 0 3px rgba(255,255,255,.06)}
+    .dot.ok{background:var(--good); box-shadow:0 0 0 3px rgba(45,227,138,.18)}
+    .dot.bad{background:var(--bad); box-shadow:0 0 0 3px rgba(255,77,109,.18)}
+    .dot.wait{background:var(--warn); box-shadow:0 0 0 3px rgba(255,209,102,.18)}
 
+    .tabs{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .tab{padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background: rgba(255,255,255,.06);color: var(--muted);font-weight:900;cursor:pointer;user-select:none}
+    .tab.active{color: var(--text);border-color: rgba(88,214,255,.45);background: linear-gradient(180deg, rgba(88,214,255,.20), rgba(88,214,255,.08));box-shadow: 0 10px 22px rgba(88,214,255,.10)}
+
+    .card{margin-top:14px;border:1px solid var(--stroke);border-radius: var(--r22);background: linear-gradient(180deg, rgba(255,255,255,.065), rgba(255,255,255,.03));box-shadow: var(--shadow);backdrop-filter: blur(10px);overflow:hidden}
+    .card .hd{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px;border-bottom:1px solid rgba(255,255,255,.08)}
+    .h{font-weight:950;letter-spacing:.2px;font-size:14px}
+    .sub{color:var(--muted);font-size:12px}
+    .bd{padding:14px}
+
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
+    label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+    input,select,textarea{width:100%;padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background: rgba(0,0,0,.22);color: var(--text);outline:none}
+    input:focus,select:focus,textarea:focus{border-color: rgba(88,214,255,.45);box-shadow: 0 0 0 3px rgba(88,214,255,.12)}
+    textarea{min-height:100px;resize:vertical}
+
+    .col{min-width:220px;flex:1}
+    .col.sm{min-width:160px;max-width:240px}
+    .col.xs{min-width:140px;max-width:220px}
+
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background: rgba(255,255,255,.06);color: var(--text);cursor:pointer;user-select:none;transition: transform .06s ease, border-color .2s ease, background .2s ease;font-weight:900;font-size:13px}
+    .btn:hover{border-color: rgba(88,214,255,.35); background: rgba(88,214,255,.08)}
+    .btn:active{transform: translateY(1px)}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .btn.primary{border-color: rgba(88,214,255,.55);background: linear-gradient(180deg, rgba(88,214,255,.22), rgba(88,214,255,.10));box-shadow: 0 8px 22px rgba(88,214,255,.10)}
+    .btn.danger{border-color: rgba(255,77,109,.55);background: linear-gradient(180deg, rgba(255,77,109,.18), rgba(255,77,109,.08))}
+    .btn.ghost{background: transparent}
+    .btn.small{padding:8px 10px;border-radius:12px;font-size:12px}
+
+    .mono{font-family: ui-monospace,SFMono-Regular,Menlo,monospace}
+    .hint{font-size:12px;color:var(--muted2);line-height:1.35}
+
+    .status{padding:10px 12px;border-radius: var(--r16);border:1px solid rgba(255,255,255,.10);background: rgba(0,0,0,.18);color: var(--muted);font-size:13px;line-height:1.35;white-space:pre-line}
+    .status.ok{border-color: rgba(45,227,138,.35); color: rgba(45,227,138,.95)}
+    .status.bad{border-color: rgba(255,77,109,.35); color: rgba(255,77,109,.95)}
+    .status.wait{border-color: rgba(255,209,102,.35); color: rgba(255,209,102,.95)}
+
+    .drop{border:1px dashed rgba(255,255,255,.22);border-radius: var(--r16);padding:14px;text-align:center;background: rgba(0,0,0,.16);color: var(--muted)}
+    .drop.drag{border-color: rgba(88,214,255,.55);background: rgba(88,214,255,.08);color: var(--text)}
+
+    .tblwrap{overflow:auto;max-height:520px;border-radius: var(--r16);border:1px solid rgba(255,255,255,.08)}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{border-bottom:1px solid rgba(255,255,255,.07);padding:10px 8px;text-align:left}
+    th{position:sticky;top:0;background: rgba(7,10,18,.92);backdrop-filter: blur(8px);z-index:1;color: rgba(234,240,255,.85);font-weight:950;letter-spacing:.2px}
+    td[contenteditable="true"]{outline:none;border-radius:10px;background: rgba(255,255,255,.02)}
+    td[contenteditable="true"]:focus{box-shadow: 0 0 0 3px rgba(88,214,255,.12);border:1px solid rgba(88,214,255,.25)}
+    tr.vBad td{background: rgba(255,77,109,.10) !important; border-bottom-color: rgba(255,77,109,.22) !important;}
+    tr.vWarn td{background: rgba(255,209,102,.10) !important; border-bottom-color: rgba(255,209,102,.22) !important;}
+
+    .tag{display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background: rgba(0,0,0,.20);color: var(--muted);font-size:12px;font-weight:900}
+    .footerNav{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo"><img src="../assets/logo.png" alt="D.S. CronoAgility" /></div>
+        <div class="titles">
+          <div class="t">D.S. CronoAgility</div>
+          <div class="s">Admin • Startlist Online (coerente CSV)</div>
+        </div>
+      </div>
+      <div class="badge"><span class="dot" id="apiDot"></span><span class="mono" id="apiTxt">API non configurata</span></div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="t1">1) Connessione</div>
+      <div class="tab" data-tab="t2">2) Gara</div>
+      <div class="tab" data-tab="t3">3) Startlist</div>
+      <div class="tab" data-tab="t4">4) Online</div>
+    </div>
+
+    <!-- TAB 1 -->
+    <div class="card" id="t1">
+      <div class="hd">
+        <div>
+          <div class="h">Connessione API</div>
+          <div class="sub">URL /exec + Admin Key (salvati nel browser)</div>
+        </div>
+        <button class="btn" id="saveApi">Salva</button>
+      </div>
+      <div class="bd">
+        <div class="row">
+          <div class="col">
+            <label>URL API (Apps Script /exec)</label>
+            <input id="apiUrl" placeholder="https://script.google.com/macros/s/.../exec" />
+          </div>
+          <div class="col sm">
+            <label>Admin Key</label>
+            <input id="apiKey" type="password" placeholder="chiave admin" />
+          </div>
+        </div>
+        <div class="footerNav">
+          <span class="hint">Step 1 di 4</span>
+          <button class="btn primary" id="next1">Avanti →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2 -->
+    <div class="card" id="t2" style="display:none">
+      <div class="hd">
+        <div>
+          <div class="h">Dati Gara (da CSV)</div>
+          <div class="sub">Data + Tipo Evento + Classe + Categoria</div>
+        </div>
+        <button class="btn" id="genName">Genera</button>
+      </div>
+      <div class="bd">
+        <div class="row">
+          <div class="col xs">
+            <label>Data</label>
+            <input id="date" type="date" />
+          </div>
+          <div class="col">
+            <label>Tipo Evento</label>
+            <input id="event" placeholder="agility1" />
+          </div>
+
+          <div class="col xs">
+            <label>Classe (CSV)</label>
+            <input id="classe" placeholder="Es. 1 Assoluti" />
+          </div>
+
+          <div class="col xs">
+            <label>Categoria</label>
+            <select id="cat">
+              <option value="Small">Small</option>
+              <option value="Medium">Medium</option>
+              <option value="Intermedium">Intermedium</option>
+              <option value="Large">Large</option>
+            </select>
+          </div>
+
+          <div class="col xs">
+            <label>Categoria manuale (opzionale)</label>
+            <input id="catCustom" placeholder="Es. Debuttanti..." />
+          </div>
+        </div>
+
+        <div style="margin-top:12px" class="hint">Chiave gara (usata online):</div>
+        <div class="mono" id="garaName" style="margin-top:6px;font-weight:950;font-size:14px">—</div>
+
+        <div class="footerNav">
+          <button class="btn ghost" id="back2">← Indietro</button>
+          <div class="hint">Step 2 di 4</div>
+          <button class="btn primary" id="next2">Avanti →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3 -->
+    <div class="card" id="t3" style="display:none">
+      <div class="hd">
+        <div>
+          <div class="h">Startlist (campi CSV)</div>
+          <div class="sub">Importa CSV e modifica le celle</div>
+        </div>
+        <div class="row">
+          <input id="file" type="file" accept=".csv,text/csv" style="max-width:260px" />
+          <button class="btn" id="pasteBtn">Incolla CSV</button>
+        </div>
+      </div>
+      <div class="bd">
+        <div id="drop" class="drop">Trascina qui un CSV (come quello ENCI) oppure usa “Scegli file”.</div>
+
+        <div id="pasteWrap" style="display:none;margin-top:12px">
+          <label>Incolla CSV</label>
+          <textarea id="csvText"></textarea>
+          <div class="row" style="margin-top:10px">
+            <button class="btn primary" id="parseCsv">Importa</button>
+            <button class="btn ghost" id="closePaste">Chiudi</button>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:12px">
+          <button class="btn" id="addRow">Aggiungi riga</button>
+          <button class="btn danger" id="clearAll">Svuota</button>
+          <button class="btn" id="normalize">Ricalcola Ordine</button>
+        </div>
+
+        <div class="row" style="margin-top:12px">
+          <span class="tag" id="countTag">Righe: 0</span>
+          <span class="tag" id="errTag">Errori: 0</span>
+          <span class="tag" id="warnTag">Warning: 0</span>
+        </div>
+
+        <div class="tblwrap" style="margin-top:12px">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:70px">Ordine</th>
+                <th style="width:120px">Numero Pettorale</th>
+                <th style="width:220px">Club</th>
+                <th style="width:260px">Concorrente</th>
+                <th style="width:140px">Razza</th>
+                <th style="width:110px">Paese</th>
+                <th style="width:220px">Conduttore</th>
+                <th style="width:140px">Classe</th>
+                <th style="width:140px">Categoria</th>
+                <th style="width:160px">Azioni</th>
+              </tr>
+            </thead>
+            <tbody id="tb">
+              <tr><td colspan="10" class="muted">Nessun dato</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="hint" style="margin-top:10px">
+          Validazione: “Numero Pettorale” obbligatorio • no duplicati • righe vuote non ammesse.
+        </div>
+
+        <div class="footerNav">
+          <button class="btn ghost" id="back3">← Indietro</button>
+          <div class="hint">Step 3 di 4</div>
+          <button class="btn primary" id="next3">Avanti →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4 -->
+    <div class="card" id="t4" style="display:none">
+      <div class="hd">
+        <div>
+          <div class="h">Online</div>
+          <div class="sub">Carica da online o pubblica questa startlist</div>
+        </div>
+        <div class="row">
+          <button class="btn" id="loadOnline">Carica da online</button>
+          <button class="btn" id="validateBtn">Valida</button>
+          <button class="btn primary" id="publish">Metti online</button>
+        </div>
+      </div>
+      <div class="bd">
+        <div class="status" id="status">Pronto.</div>
+        <div class="footerNav">
+          <button class="btn ghost" id="back4">← Indietro</button>
+          <div class="hint">Step 4 di 4</div>
+          <span></span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+  const $ = (id)=>document.getElementById(id);
+
+  // ===== tab nav =====
+  const tabs = Array.from(document.querySelectorAll(".tab"));
+  const panelIds = ["t1","t2","t3","t4"];
+  function showTab(id){
+    tabs.forEach(t=>t.classList.toggle("active", t.dataset.tab===id));
+    panelIds.forEach(pid => $(pid).style.display = (pid===id) ? "" : "none");
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+  tabs.forEach(t=>t.addEventListener("click", ()=>showTab(t.dataset.tab)));
+  $("next1").addEventListener("click", ()=>showTab("t2"));
+  $("back2").addEventListener("click", ()=>showTab("t1"));
+  $("next2").addEventListener("click", ()=>showTab("t3"));
+  $("back3").addEventListener("click", ()=>showTab("t2"));
+  $("next3").addEventListener("click", ()=>showTab("t4"));
+  $("back4").addEventListener("click", ()=>showTab("t3"));
+
+  // ===== status =====
+  function setStatus(msg, type){
+    const el = $("status");
+    el.textContent = msg;
+    el.classList.remove("ok","bad","wait");
+    if(type==="ok") el.classList.add("ok");
+    else if(type==="bad") el.classList.add("bad");
+    else if(type==="wait") el.classList.add("wait");
+  }
+
+  // ===== API badge =====
+  function setApiBadge(ok, wait=false){
+    const dot = $("apiDot");
+    const txt = $("apiTxt");
+    if(wait){ dot.className="dot wait"; txt.textContent="API in uso..."; return; }
+    if(ok){ dot.className="dot ok"; txt.textContent="API configurata"; }
+    else { dot.className="dot bad"; txt.textContent="API non configurata"; }
+  }
+
+  // ===== cfg =====
+  function loadCfg(){
+    $("apiUrl").value = localStorage.getItem("admin_apiUrl") || "";
+    $("apiKey").value = localStorage.getItem("admin_apiKey") || "";
+    $("catCustom").value = localStorage.getItem("admin_catCustom") || "";
+    $("classe").value = localStorage.getItem("admin_classe") || "";
+    setApiBadge(!!$("apiUrl").value.trim());
+  }
+  function saveCfg(){
+    localStorage.setItem("admin_apiUrl", $("apiUrl").value.trim());
+    localStorage.setItem("admin_apiKey", $("apiKey").value.trim());
+    localStorage.setItem("admin_catCustom", $("catCustom").value.trim());
+    localStorage.setItem("admin_classe", $("classe").value.trim());
+    setApiBadge(!!$("apiUrl").value.trim());
+  }
+  $("saveApi").addEventListener("click", ()=>{ saveCfg(); setStatus("Configurazione salvata.", "ok"); });
+
+  // ===== gara fields =====
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  function formatDDMMYYYY(iso){
+    if(!iso || !iso.includes("-")) return "";
+    const [y,m,d] = iso.split("-");
+    return `${d}-${m}-${y}`;
+  }
+  function getCategoria(){
+    const custom = ($("catCustom").value || "").trim().replace(/\\s+/g," ");
+    if(custom) return custom;
+    return $("cat").value.trim();
+  }
+  function getClasse(){
+    return ($("classe").value || "").trim().replace(/\\s+/g," ");
+  }
+  function computeGaraKey(){
+    const iso = $("date").value.trim();
+    const ev  = ($("event").value || "").trim().replace(/\\s+/g," ");
+    const cl  = getClasse();
+    const ca  = getCategoria();
+    if(!iso || !ev || !cl || !ca) return "";
+    return `${formatDDMMYYYY(iso)} ${ev} ${cl} ${ca}`.trim();
+  }
+  function updateGaraLabel(){
+    $("garaName").textContent = computeGaraKey() || "—";
+  }
+  $("genName").addEventListener("click", ()=>{ saveCfg(); updateGaraLabel(); });
+  $("date").addEventListener("change", updateGaraLabel);
+  $("event").addEventListener("input", updateGaraLabel);
+  $("classe").addEventListener("input", updateGaraLabel);
+  $("cat").addEventListener("change", updateGaraLabel);
+  $("catCustom").addEventListener("input", updateGaraLabel);
+
+  // ===== data model (CSV columns) =====
+  // {Ordine, Numero Pettorale, Club, Concorrente, Razza, Paese, Conduttore, Classe, Categoria}
+  let rows = [];
+  let vInfo = { badIdx:new Set(), warnIdx:new Set(), warns:0 };
+
+  function esc(s){
+    return String(s ?? "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+  function isEmptyRow(r){
+    const keys = ["Numero Pettorale","Club","Concorrente","Razza","Paese","Conduttore","Classe","Categoria"];
+    return keys.every(k => !String(r[k]||"").trim());
+  }
+  function normalizeOrd(){
+    rows.forEach((r,i)=> r["Ordine"] = String(i+1));
+  }
+
+  function render(){
+    $("countTag").textContent = "Righe: " + rows.length;
+    $("errTag").textContent   = "Errori: " + vInfo.badIdx.size;
+    $("warnTag").textContent  = "Warning: " + (vInfo.warns||0);
+
+    const tb = $("tb");
+    if(!rows.length){
+      tb.innerHTML = `<tr><td colspan="10" class="muted">Nessun dato</td></tr>`;
+      return;
+    }
+
+    tb.innerHTML = rows.map((r, idx)=>{
+      const cls = vInfo.badIdx.has(idx) ? "vBad" : (vInfo.warnIdx.has(idx) ? "vWarn" : "");
+      const c = (k)=>`<td contenteditable="true" data-k="${k}">${esc(r[k])}</td>`;
+      return `
+        <tr data-idx="${idx}" class="${cls}">
+          ${c("Ordine")}
+          ${c("Numero Pettorale")}
+          ${c("Club")}
+          ${c("Concorrente")}
+          ${c("Razza")}
+          ${c("Paese")}
+          ${c("Conduttore")}
+          ${c("Classe")}
+          ${c("Categoria")}
+          <td>
+            <button class="btn small" data-act="up">↑</button>
+            <button class="btn small" data-act="dn">↓</button>
+            <button class="btn small danger" data-act="del">Del</button>
+          </td>
+        </tr>`;
+    }).join("");
+
+    tb.querySelectorAll("td[contenteditable='true']").forEach(td=>{
+      td.addEventListener("blur", ()=>{
+        const tr = td.closest("tr");
+        const i  = Number(tr.dataset.idx);
+        const k  = td.dataset.k;
+        rows[i][k] = td.textContent.trim();
+        validate(false);
+      });
+    });
+
+    tb.querySelectorAll("button[data-act]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const tr = btn.closest("tr");
+        const i  = Number(tr.dataset.idx);
+        const act = btn.dataset.act;
+        if(act==="up" && i>0){
+          const t = rows[i-1]; rows[i-1]=rows[i]; rows[i]=t;
+          normalizeOrd(); validate(false);
+        }else if(act==="dn" && i<rows.length-1){
+          const t = rows[i+1]; rows[i+1]=rows[i]; rows[i]=t;
+          normalizeOrd(); validate(false);
+        }else if(act==="del"){
+          rows.splice(i,1);
+          normalizeOrd(); validate(false);
+        }
+      });
+    });
+  }
+
+  function validate(verbose=true){
+    const bad = new Set();
+    const warn = new Set();
+    let warns = 0;
+
+    rows.forEach((r,i)=>{ if(isEmptyRow(r)) bad.add(i); });
+
+    // Numero Pettorale required + duplicates
+    const seen = new Map();
+    rows.forEach((r,i)=>{
+      const bib = String(r["Numero Pettorale"]||"").trim();
+      if(!bib) bad.add(i);
+      else if(seen.has(bib)){ bad.add(i); bad.add(seen.get(bib)); }
+      else seen.set(bib,i);
+    });
+
+    // Ordine warning if non numeric
+    rows.forEach((r,i)=>{
+      const o = String(r["Ordine"]||"").trim();
+      if(o && !/^\d+$/.test(o)){ warn.add(i); warns++; }
+    });
+
+    vInfo = { badIdx: bad, warnIdx: warn, warns };
+
+    const canPublish = (bad.size===0) && rows.length>0;
+    $("publish").disabled = !canPublish;
+
+    if(verbose){
+      if(!rows.length) setStatus("Tabella vuota.", "bad");
+      else if(bad.size) setStatus("⛔ Errori: righe rosse (pettorale mancante/duplicato o righe vuote).", "bad");
+      else if(warns) setStatus("⚠️ OK con warning (Ordine non numerico). Consiglio: “Ricalcola Ordine”.", "wait");
+      else setStatus("✅ Validazione OK. Puoi pubblicare.", "ok");
+    }
+
+    render();
+    return canPublish;
+  }
+
+  // ===== CSV import (detect ; or , + headers like your file) =====
+  function parseCsvText(text){
+    const lines = text.replace(/\\r/g,"").split("\\n").filter(l=>l.trim().length);
+    if(!lines.length) return [];
+
+    const sample = lines[0];
+    const delim = (sample.split(";").length > sample.split(",").length) ? ";" : ",";
+
+    function splitLine(line){
+      const out=[]; let cur="", q=false;
+      for(let i=0;i<line.length;i++){
+        const c=line[i];
+        if(c === '"'){
+          if(q && line[i+1] === '"'){ cur+='"'; i++; }
+          else q=!q;
+        }else if(!q && c===delim){
+          out.push(cur.trim()); cur="";
+        }else cur+=c;
+      }
+      out.push(cur.trim());
+      return out;
+    }
+
+    const head = splitLine(lines[0]).map(h=>h.trim());
+    const lower = head.map(h=>h.toLowerCase());
+
+    // map columns by header name (case-insensitive)
+    const colIndex = (name)=>{
+      const j = lower.indexOf(String(name).toLowerCase());
+      return j>=0 ? j : -1;
+    };
+
+    const idxOrd = colIndex("Ordine");
+    const idxBib = colIndex("Numero Pettorale");
+    const idxClub = colIndex("Club");
+    const idxConc = colIndex("Concorrente");
+    const idxRazza = colIndex("Razza");
+    const idxPaese = colIndex("Paese");
+    const idxCond = colIndex("Conduttore");
+    const idxClasse = colIndex("Classe");
+    const idxCat = colIndex("Categoria");
+
+    // if no headers, fallback (Ordine,Bib,Club,Concorrente,Razza,Paese,Conduttore,Classe,Categoria)
+    const hasHeader = (idxBib>=0 || idxOrd>=0 || idxCat>=0);
+
+    const out=[];
+    for(let i=hasHeader?1:0;i<lines.length;i++){
+      const cols = splitLine(lines[i]);
+      const get = (j, fb="") => (j>=0 && j<cols.length) ? cols[j] : fb;
+
+      const r = {
+        "Ordine": get(idxOrd, String(out.length+1)),
+        "Numero Pettorale": get(idxBib, ""),
+        "Club": get(idxClub, ""),
+        "Concorrente": get(idxConc, ""),
+        "Razza": get(idxRazza, ""),
+        "Paese": get(idxPaese, ""),
+        "Conduttore": get(idxCond, ""),
+        "Classe": get(idxClasse, getClasse()),
+        "Categoria": get(idxCat, getCategoria())
+      };
+
+      if(isEmptyRow(r)) continue;
+      out.push(r);
+    }
+    return out;
+  }
+
+  // file import
+  $("file").addEventListener("change", async (ev)=>{
+    const f = ev.target.files && ev.target.files[0];
+    if(!f) return;
+    const text = await f.text();
+    rows = parseCsvText(text);
+    normalizeOrd();
+    validate(true);
+    showTab("t3");
+  });
+
+  // drag drop
+  const drop = $("drop");
+  drop.addEventListener("dragover", (e)=>{ e.preventDefault(); drop.classList.add("drag"); });
+  drop.addEventListener("dragleave", ()=> drop.classList.remove("drag"));
+  drop.addEventListener("drop", async (e)=>{
+    e.preventDefault(); drop.classList.remove("drag");
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if(!f) return;
+    const text = await f.text();
+    rows = parseCsvText(text);
+    normalizeOrd();
+    validate(true);
+    showTab("t3");
+  });
+
+  // paste CSV
+  $("pasteBtn").addEventListener("click", ()=>{
+    $("pasteWrap").style.display = "block";
+    $("csvText").focus();
+  });
+  $("closePaste").addEventListener("click", ()=>{
+    $("pasteWrap").style.display = "none";
+    $("csvText").value = "";
+  });
+  $("parseCsv").addEventListener("click", ()=>{
+    const t = $("csvText").value || "";
+    rows = parseCsvText(t);
+    normalizeOrd();
+    validate(true);
+    $("pasteWrap").style.display = "none";
+  });
+
+  // add/clear/normalize
+  $("addRow").addEventListener("click", ()=>{
+    rows.push({
+      "Ordine": String(rows.length+1),
+      "Numero Pettorale":"",
+      "Club":"",
+      "Concorrente":"",
+      "Razza":"",
+      "Paese":"",
+      "Conduttore":"",
+      "Classe": getClasse(),
+      "Categoria": getCategoria()
+    });
+    validate(false);
+  });
+  $("clearAll").addEventListener("click", ()=>{
+    if(confirm("Svuotare tutta la tabella?")){
+      rows = [];
+      validate(false);
+    }
+  });
+  $("normalize").addEventListener("click", ()=>{
+    normalizeOrd();
+    validate(true);
+  });
+
+  $("validateBtn").addEventListener("click", ()=>validate(true));
+
+  // ===== online load/publish =====
+  async function loadOnline(){
+    const apiUrl = $("apiUrl").value.trim();
+    const gara = computeGaraKey();
+    const cat  = getCategoria();
+    if(!apiUrl){ setStatus("Inserisci l'URL API /exec (Step 1).", "bad"); showTab("t1"); return; }
+    if(!gara){ setStatus("Completa Data/Evento/Classe/Categoria (Step 2).", "bad"); showTab("t2"); return; }
+
+    saveCfg();
+    setApiBadge(true, true);
+    $("loadOnline").disabled = true;
+    setStatus("Caricamento da online...", "wait");
+
+    try{
+      const url = `${apiUrl}?gara=${encodeURIComponent(gara)}&cat=${encodeURIComponent(cat)}&t=${Date.now()}`;
+      const res = await fetch(url, {cache:"no-store"});
+      const j = await res.json();
+      const list = Array.isArray(j.startlist) ? j.startlist : [];
+      if(!list.length){
+        rows = [];
+        validate(false);
+        setStatus("Nessuna startlist trovata online per questa gara/categoria.", "bad");
+        return;
+      }
+
+      rows = list.map((r,i)=>({
+        "Ordine": String(r["Ordine"] ?? r.Ordine ?? r.ord ?? (i+1)),
+        "Numero Pettorale": String(r["Numero Pettorale"] ?? r["NumeroPettorale"] ?? r.bib ?? ""),
+        "Club": String(r.Club ?? ""),
+        "Concorrente": String(r.Concorrente ?? ""),
+        "Razza": String(r.Razza ?? ""),
+        "Paese": String(r.Paese ?? ""),
+        "Conduttore": String(r.Conduttore ?? ""),
+        "Classe": String(r.Classe ?? getClasse()),
+        "Categoria": String(r.Categoria ?? getCategoria())
+      }));
+
+      normalizeOrd();
+      validate(true);
+      setStatus("✅ Startlist caricata da online ("+rows.length+" righe).", "ok");
+      showTab("t3");
+    }catch(e){
+      setStatus("Errore caricamento online: " + e.message, "bad");
+    }finally{
+      $("loadOnline").disabled = false;
+      setApiBadge(!!$("apiUrl").value.trim());
+    }
+  }
+
+  async function publish(){
+    const apiUrl = $("apiUrl").value.trim();
+    const apiKey = $("apiKey").value.trim();
+    const gara = computeGaraKey();
+    const cat  = getCategoria();
+
+    if(!apiUrl){ setStatus("Inserisci l'URL API /exec (Step 1).", "bad"); showTab("t1"); return; }
+    if(!apiKey){ setStatus("Inserisci l'Admin Key (Step 1).", "bad"); showTab("t1"); return; }
+    if(!gara){ setStatus("Completa Data/Evento/Classe/Categoria (Step 2).", "bad"); showTab("t2"); return; }
+    if(!rows.length){ setStatus("Tabella vuota (Step 3).", "bad"); showTab("t3"); return; }
+
+    saveCfg();
+    if(!validate(true)) return;
+
+    $("publish").disabled = true;
+    setStatus("Invio in corso...", "wait");
+
+    try{
+      // inviamo items con campi CSV (Apps Script deve salvarli)
+      const items = rows.map((r,i)=>({
+        "Ordine": Number(r["Ordine"]) || (i+1),
+        "Numero Pettorale": String(r["Numero Pettorale"]||"").trim(),
+        "Club": String(r.Club||"").trim(),
+        "Concorrente": String(r.Concorrente||"").trim(),
+        "Razza": String(r.Razza||"").trim(),
+        "Paese": String(r.Paese||"").trim(),
+        "Conduttore": String(r.Conduttore||"").trim(),
+        "Classe": String(r.Classe||getClasse()).trim(),
+        "Categoria": String(r.Categoria||getCategoria()).trim()
+      }));
+
+      const payload = { key: apiKey, action: "startlist_set", gara, cat, items };
+      const res = await fetch(apiUrl, {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(payload)
+      });
+      const j = await res.json().catch(()=>({}));
+      if(j && j.ok){
+        setStatus("✅ Pubblicato online con successo.", "ok");
+      }else{
+        setStatus("Errore pubblicazione: " + (j.error || "unknown"), "bad");
+      }
+    }catch(e){
+      setStatus("Errore rete/API: " + e.message, "bad");
+    }finally{
+      $("publish").disabled = false;
+      validate(false);
+    }
+  }
+
+  $("loadOnline").addEventListener("click", loadOnline);
+  $("publish").addEventListener("click", publish);
+
+  // init
+  (function init(){
+    const d = new Date();
+    $("date").value = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+    $("event").value = "agility1";
+    loadCfg();
+    updateGaraLabel();
+    validate(false);
+    $("publish").disabled = true;
+    showTab("t1");
+  })();
+</script>
+</body>
+</html>
