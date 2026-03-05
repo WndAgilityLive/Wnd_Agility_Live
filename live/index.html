@@ -6,25 +6,21 @@
   <title>D.S. CronoAgility — Live</title>
   <style>
     body{font-family:system-ui,Arial;margin:16px;max-width:1100px}
-
     .header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
     .header img{width:42px;height:42px;border-radius:10px;border:1px solid #e6e6e6;object-fit:cover}
     .title{font-weight:900;font-size:20px;line-height:1}
     .subtitle{opacity:.7;font-size:12px;margin-top:4px}
-
     .top{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
     .pill{padding:10px 12px;border:1px solid #e6e6e6;border-radius:999px;background:#fff}
     .muted{opacity:.65}
     .btn{border:1px solid #e6e6e6;border-radius:12px;padding:10px 14px;background:#fff;cursor:pointer}
     .btn:disabled{opacity:.45;cursor:not-allowed}
     .search{padding:10px 12px;border:1px solid #e6e6e6;border-radius:12px;width:min(420px,100%)}
-
     .card{border:1px solid #e6e6e6;border-radius:18px;padding:14px;margin-top:14px;background:#fff}
     h3{margin:0 0 10px 0;font-size:20px}
     table{width:100%;border-collapse:collapse;font-size:14px}
     th,td{border-bottom:1px solid #f0f0f0;padding:10px 8px;text-align:left}
     th{font-weight:700}
-
     .watchSel{padding:6px 8px;border:1px solid #e6e6e6;border-radius:10px;background:#fff}
     .watchCb{transform:scale(1.15)}
   </style>
@@ -75,14 +71,16 @@
   </div>
 
 <script>
-  // ✅ API_BASE già impostato (googleusercontent)
   const API_BASE = "https://script.googleusercontent.com/macros/echo?user_content_key=AY5xjrS3dZOrJuC2Y8cmes2GXauClEG0DzPg1M5n1HlCLJy5Ye6XZk1Z1d-AknZpWlsms2JSj-CkjTSuGSav_HwMdCkdEOqPGihRp61tCs-P0MVlTif3u90RrqY4-GVBS4jPTmhqjMEl8uQ7HyluYa9iMrhsUpZ-yK0YENpjyt6mRKjgTMdxrLzfYt49DqQ5SLHSfA3ez5uo8BZEXEhqS21Z1R0WR1zBysrItuW8wKEIWnVQb_0PZVa4V1kAIostvEvDQjnb9oFF3wT9TUn1u7I1cfohrvwQM6XNd7cG_VgBMqsaDQ9pmxCr6NVFm5hb-ZiLQ-tRip56WcoliIiV-usPMJtG80NFgHKicHfK1_RQ&lib=MoQEIKQJr1pOBA9Hp5bFT2xNrVEl51b0O";
-
   const $ = (id)=>document.getElementById(id);
 
-  function qs(name){
-    const u = new URL(location.href);
-    return (u.searchParams.get(name)||"").trim();
+  function qs(name){ const u = new URL(location.href); return (u.searchParams.get(name)||"").trim(); }
+
+  function buildGetUrl(apiUrl, params){
+    const u = new URL(apiUrl);
+    Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, v));
+    u.searchParams.set("t", String(Date.now()));
+    return u.toString();
   }
 
   const data = qs("data");
@@ -94,95 +92,68 @@
   $("garaLbl").textContent = garaLabel || "-";
   $("catLbl").textContent  = categoria || "-";
 
-  function esc(s){
-    return String(s??"").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  }
+  function esc(s){ return String(s??"").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
   function norm(s){ return String(s||"").toLowerCase(); }
 
-  const LS_WATCH = "ds_watch_map_v1";
-  const LS_FIRED = "ds_watch_fired_v1";
-
-  function loadObj(key){
-    try{ return JSON.parse(localStorage.getItem(key) || "{}"); }
-    catch(e){ return {}; }
-  }
-  function saveObj(key, obj){
-    localStorage.setItem(key, JSON.stringify(obj));
-  }
-  function loadSet(key){
-    try{ return new Set(JSON.parse(localStorage.getItem(key) || "[]")); }
-    catch(e){ return new Set(); }
-  }
-  function saveSet(key, set){
-    localStorage.setItem(key, JSON.stringify(Array.from(set)));
-  }
+  const LS_WATCH="ds_watch_map_v1", LS_FIRED="ds_watch_fired_v1";
+  const loadObj=(k)=>{ try{return JSON.parse(localStorage.getItem(k)||"{}")}catch(e){return{}} };
+  const saveObj=(k,o)=>localStorage.setItem(k,JSON.stringify(o));
+  const loadSet=(k)=>{ try{return new Set(JSON.parse(localStorage.getItem(k)||"[]"))}catch(e){return new Set()} };
+  const saveSet=(k,s)=>localStorage.setItem(k,JSON.stringify(Array.from(s)));
 
   let watchedMap = loadObj(LS_WATCH);
   let fired = loadSet(LS_FIRED);
 
   function beep(){
     try{
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = "sine";
-      o.frequency.value = 880;
-      g.gain.value = 0.08;
+      const ctx = new (window.AudioContext||window.webkitAudioContext)();
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type="sine"; o.frequency.value=880; g.gain.value=0.08;
       o.connect(g); g.connect(ctx.destination);
-      o.start();
-      setTimeout(()=>{ o.stop(); ctx.close(); }, 250);
+      o.start(); setTimeout(()=>{o.stop();ctx.close()},250);
     }catch(e){}
     if(navigator.vibrate) navigator.vibrate([120,60,120]);
   }
 
-  let cacheStart = [];
-  let cacheRank = [];
-
-  function rowMatches(r, q){
-    if(!q) return true;
-    const t = norm(r.bib) + " " + norm(r.conduttore) + " " + norm(r.cane);
-    return t.includes(q);
-  }
+  let cacheStart=[], cacheRank=[];
 
   function render(){
     const q = norm($("q").value);
 
-    const start = (cacheStart||[]).map(r => ({
-      ord: r["Ordine"] ?? r.Ordine ?? "",
-      bib: r["Numero Pettorale"] ?? r["NumeroPettorale"] ?? r.bib ?? "",
-      conduttore: r["Conduttore"] ?? r.Conduttore ?? "",
-      cane: r["Concorrente"] ?? r.Concorrente ?? ""
-    })).sort((a,b)=>Number(a.ord||0)-Number(b.ord||0));
+    const start = (cacheStart||[]).map(r=>({
+      ord: r["Ordine"] ?? "",
+      bib: r["Numero Pettorale"] ?? "",
+      conduttore: r["Conduttore"] ?? "",
+      cane: r["Concorrente"] ?? ""
+    })).sort((a,b)=>Number(a.ord||0)-Number(b.ord||0)).filter(r=>{
+      const t = (norm(r.bib)+" "+norm(r.conduttore)+" "+norm(r.cane));
+      return !q || t.includes(q);
+    });
 
-    const startF = start.filter(r=>rowMatches(r,q));
-
-    const rank = (cacheRank||[]).map(r => ({
-      pos: r.pos ?? r["pos"] ?? "",
-      bib: r.bib ?? r["bib"] ?? r["Numero Pettorale"] ?? "",
-      conduttore: r.conduttore ?? r["conduttore"] ?? r["Conduttore"] ?? "",
-      cane: r.cane ?? r["cane"] ?? r["Concorrente"] ?? "",
-      time: r.time ?? r["time"] ?? r["Tempo"] ?? "",
-      err: r.err ?? r["err"] ?? r["Errori"] ?? "",
-      ref: r.ref ?? r["ref"] ?? r["Rifiuti"] ?? "",
-      stato: r.stato ?? r["stato"] ?? r["Stato"] ?? ""
-    })).sort((a,b)=>Number(a.pos||0)-Number(b.pos||0));
-
-    const rankF = rank.filter(r=>rowMatches(r,q));
+    const rank = (cacheRank||[]).map(r=>({
+      pos: r["Pos"] ?? r.pos ?? r["pos"] ?? "",
+      bib: r["Numero Pettorale"] ?? r.bib ?? r["bib"] ?? "",
+      conduttore: r["Conduttore"] ?? r.conduttore ?? "",
+      cane: r["Concorrente"] ?? r.cane ?? "",
+      time: r["Tempo"] ?? r.time ?? "",
+      err: r["Errori"] ?? r.err ?? "",
+      ref: r["Rifiuti"] ?? r.ref ?? "",
+      stato: r["Stato"] ?? r.stato ?? ""
+    })).sort((a,b)=>Number(a.pos||0)-Number(b.pos||0)).filter(r=>{
+      const t = (norm(r.bib)+" "+norm(r.conduttore)+" "+norm(r.cane));
+      return !q || t.includes(q);
+    });
 
     const doneBibs = new Set(rank.map(r=>String(r.bib||"").trim()));
-    const queue = startF.filter(r=>!doneBibs.has(String(r.bib||"").trim()));
-    const next = queue.slice(0, 10);
+    const queue = start.filter(r=>!doneBibs.has(String(r.bib||"").trim()));
+    const next = queue.slice(0,10);
 
     for(let i=0;i<queue.length;i++){
-      const bib = String(queue[i].bib || "").trim();
-      const soglia = Number(watchedMap[bib] || 0);
-      if(!bib || !soglia) continue;
-      const pos = i + 1;
-      if(pos <= soglia && !fired.has(bib)){
-        beep();
-        fired.add(bib);
-        saveSet(LS_FIRED, fired);
-        break;
+      const bib = String(queue[i].bib||"").trim();
+      const soglia = Number(watchedMap[bib]||0);
+      if(!bib||!soglia) continue;
+      if(i+1 <= soglia && !fired.has(bib)){
+        beep(); fired.add(bib); saveSet(LS_FIRED,fired); break;
       }
     }
 
@@ -190,11 +161,8 @@
       ? next.map(r=>`<tr><td>${esc(r.ord)}</td><td>${esc(r.bib)}</td><td>${esc(r.conduttore)}</td><td>${esc(r.cane)}</td></tr>`).join("")
       : `<tr><td colspan="4" class="muted">Nessun dato</td></tr>`;
 
-    $("rankTb").innerHTML = rankF.length
-      ? rankF.map(r=>`<tr>
-          <td>${esc(r.pos)}</td><td>${esc(r.bib)}</td><td>${esc(r.conduttore)}</td><td>${esc(r.cane)}</td>
-          <td>${esc(r.time)}</td><td>${esc(r.err)}</td><td>${esc(r.ref)}</td><td>${esc(r.stato)}</td>
-        </tr>`).join("")
+    $("rankTb").innerHTML = rank.length
+      ? rank.map(r=>`<tr><td>${esc(r.pos)}</td><td>${esc(r.bib)}</td><td>${esc(r.conduttore)}</td><td>${esc(r.cane)}</td><td>${esc(r.time)}</td><td>${esc(r.err)}</td><td>${esc(r.ref)}</td><td>${esc(r.stato)}</td></tr>`).join("")
       : `<tr><td colspan="8" class="muted">Nessun dato</td></tr>`;
 
     function watchRowHtml(r){
@@ -202,33 +170,26 @@
       const enabled = bib && (watchedMap[bib] !== undefined);
       const checked = enabled ? "checked" : "";
       const selVal = enabled ? String(watchedMap[bib]) : "10";
-
       return `<tr>
-        <td>${esc(r.ord)}</td>
-        <td>${esc(r.bib)}</td>
-        <td>${esc(r.conduttore)}</td>
-        <td>${esc(r.cane)}</td>
+        <td>${esc(r.ord)}</td><td>${esc(r.bib)}</td><td>${esc(r.conduttore)}</td><td>${esc(r.cane)}</td>
         <td style="text-align:center"><input type="checkbox" class="watchCb" data-bib="${esc(bib)}" ${checked}></td>
-        <td>
-          <select class="watchSel" data-bib="${esc(bib)}">
-            <option value="5"  ${selVal==="5"?"selected":""}>nei prossimi 5</option>
-            <option value="10" ${selVal==="10"?"selected":""}>nei prossimi 10</option>
-            <option value="15" ${selVal==="15"?"selected":""}>nei prossimi 15</option>
-            <option value="20" ${selVal==="20"?"selected":""}>nei prossimi 20</option>
-          </select>
-        </td>
+        <td><select class="watchSel" data-bib="${esc(bib)}">
+          <option value="5" ${selVal==="5"?"selected":""}>nei prossimi 5</option>
+          <option value="10" ${selVal==="10"?"selected":""}>nei prossimi 10</option>
+          <option value="15" ${selVal==="15"?"selected":""}>nei prossimi 15</option>
+          <option value="20" ${selVal==="20"?"selected":""}>nei prossimi 20</option>
+        </select></td>
       </tr>`;
     }
 
-    $("startTb").innerHTML = startF.length
-      ? startF.map(watchRowHtml).join("")
+    $("startTb").innerHTML = start.length
+      ? start.map(watchRowHtml).join("")
       : `<tr><td colspan="6" class="muted">Nessun dato</td></tr>`;
 
     document.querySelectorAll(".watchCb").forEach(cb=>{
       cb.addEventListener("change", ()=>{
         const bib = cb.getAttribute("data-bib");
         if(!bib) return;
-
         if(cb.checked){
           const sel = document.querySelector(`.watchSel[data-bib="${CSS.escape(bib)}"]`);
           watchedMap[bib] = Number(sel ? sel.value : 10);
@@ -241,7 +202,6 @@
         saveSet(LS_FIRED, fired);
       });
     });
-
     document.querySelectorAll(".watchSel").forEach(sel=>{
       sel.addEventListener("change", ()=>{
         const bib = sel.getAttribute("data-bib");
@@ -257,18 +217,8 @@
   }
 
   async function load(){
-    if(!data || !evento || !classe || !categoria){
-      $("updLbl").textContent = "Mancano parametri URL";
-      return;
-    }
-
-    const url =
-      `${API_BASE}?data=${encodeURIComponent(data)}` +
-      `&evento=${encodeURIComponent(evento)}` +
-      `&classe=${encodeURIComponent(classe)}` +
-      `&categoria=${encodeURIComponent(categoria)}` +
-      `&t=${Date.now()}`;
-
+    if(!data || !evento || !classe || !categoria){ $("updLbl").textContent="Mancano parametri URL"; return; }
+    const url = buildGetUrl(API_BASE, {data,evento,classe,categoria});
     $("refreshBtn").disabled = true;
     try{
       const r = await fetch(url, {cache:"no-store"});
@@ -278,18 +228,16 @@
       $("updLbl").textContent = j.serverTime ? new Date(j.serverTime).toLocaleString() : new Date().toLocaleString();
       render();
     }catch(e){
-      $("updLbl").textContent = "Errore caricamento";
+      $("updLbl").textContent="Errore caricamento";
     }finally{
-      $("refreshBtn").disabled = false;
+      $("refreshBtn").disabled=false;
     }
   }
 
   $("refreshBtn").addEventListener("click", load);
   $("q").addEventListener("input", render);
-
   load();
   setInterval(load, 8000);
 </script>
-
 </body>
 </html>
