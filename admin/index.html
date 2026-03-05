@@ -95,12 +95,7 @@
       color: var(--text);
       outline:none;
     }
-    input:focus,select:focus,textarea:focus{
-      border-color: rgba(88,214,255,.45);
-      box-shadow: 0 0 0 3px rgba(88,214,255,.12);
-    }
     textarea{min-height:100px;resize:vertical}
-
     .col{min-width:220px;flex:1}
     .col.sm{min-width:160px;max-width:260px}
     .col.xs{min-width:140px;max-width:220px}
@@ -188,7 +183,7 @@
     <!-- TAB 1 -->
     <div class="card" id="t1">
       <div class="hd">
-        <div><div class="h">Connessione API</div><div class="sub">URL /exec + API_KEY (non hardcoded)</div></div>
+        <div><div class="h">Connessione API</div><div class="sub">Usa preferibilmente l’URL googleusercontent (CORS)</div></div>
         <div class="row">
           <button class="btn" id="testApi">Test</button>
           <button class="btn" id="saveApi">Salva</button>
@@ -197,13 +192,16 @@
       <div class="bd">
         <div class="row">
           <div class="col">
-            <label>URL API (Apps Script /exec)</label>
-            <input id="apiUrl" placeholder="https://script.google.com/macros/s/.../exec" />
+            <label>URL API (Apps Script /exec o googleusercontent)</label>
+            <input id="apiUrl" placeholder="https://script.googleusercontent.com/macros/echo?..." />
           </div>
           <div class="col sm">
             <label>API_KEY (Apps Script)</label>
             <input id="apiKey" type="password" placeholder="API_KEY" />
           </div>
+        </div>
+        <div class="hint" style="margin-top:10px">
+          Se vedi “Failed to fetch” sul POST, usa l’URL <span class="mono">script.googleusercontent.com</span>.
         </div>
         <div class="footerNav">
           <span class="hint">Step 1 di 4</span>
@@ -220,18 +218,9 @@
       </div>
       <div class="bd">
         <div class="row">
-          <div class="col xs">
-            <label>Data (DD-MM-YYYY)</label>
-            <input id="data" placeholder="04-03-2026" />
-          </div>
-          <div class="col">
-            <label>Evento</label>
-            <input id="evento" placeholder="agility1" />
-          </div>
-          <div class="col xs">
-            <label>Classe</label>
-            <input id="classe" placeholder="1 Assoluti" />
-          </div>
+          <div class="col xs"><label>Data (DD-MM-YYYY)</label><input id="data" placeholder="04-03-2026" /></div>
+          <div class="col"><label>Evento</label><input id="evento" placeholder="agility1" /></div>
+          <div class="col xs"><label>Classe</label><input id="classe" placeholder="1 Assoluti" /></div>
           <div class="col xs">
             <label>Categoria</label>
             <select id="categoria">
@@ -242,10 +231,8 @@
             </select>
           </div>
         </div>
-
         <div class="hint" style="margin-top:10px">Chiave evento:</div>
         <div class="mono" id="keyPreview" style="margin-top:6px;font-weight:950">—</div>
-
         <div class="footerNav">
           <button class="btn ghost" id="back2">← Indietro</button>
           <div class="hint">Step 2 di 4</div>
@@ -373,6 +360,7 @@
   const $ = (id)=>document.getElementById(id);
   function esc(s){ return String(s ?? "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
+  // tabs
   const tabs = Array.from(document.querySelectorAll(".tab"));
   const panelIds = ["t1","t2","t3","t4"];
   function showTab(id){
@@ -388,6 +376,7 @@
   $("next3").addEventListener("click", ()=>showTab("t4"));
   $("back4").addEventListener("click", ()=>showTab("t3"));
 
+  // status + badge
   function setStatus(msg, type){
     const el = $("status");
     el.textContent = msg;
@@ -404,6 +393,7 @@
     else { dot.className="dot bad"; txt.textContent="API non configurata"; }
   }
 
+  // config local
   function loadCfg(){
     $("apiUrl").value = localStorage.getItem("ds_apiUrl") || "";
     $("apiKey").value = localStorage.getItem("ds_apiKey") || "";
@@ -434,9 +424,10 @@
   $("genKey").addEventListener("click", ()=>{ saveCfg(); updatePreview(); });
   ["data","evento","classe","categoria"].forEach(id=> $(id).addEventListener(id==="categoria" ? "change" : "input", updatePreview));
 
+  // Test API (GET)
   async function testApi(){
     const apiUrl = $("apiUrl").value.trim();
-    if(!apiUrl){ setApiBadge(false); setStatus("Inserisci URL API /exec.", "bad"); return false; }
+    if(!apiUrl){ setApiBadge(false); setStatus("Inserisci URL API.", "bad"); return false; }
     setApiBadge(true,true);
     setStatus("Test connessione API...", "wait");
     try{
@@ -446,12 +437,27 @@
       if(j && j.ok){ setApiBadge(true); setStatus("✅ API OK.", "ok"); return true; }
       setApiBadge(false); setStatus("⛔ Risposta inattesa.", "bad"); return false;
     }catch(e){
-      setApiBadge(false); setStatus("⛔ Failed to fetch: " + e.message, "bad"); return false;
+      setApiBadge(false);
+      setStatus("⛔ Failed to fetch: " + e.message, "bad");
+      return false;
     }
   }
-
   $("testApi").addEventListener("click", testApi);
   $("saveApi").addEventListener("click", async ()=>{ saveCfg(); await testApi(); });
+
+  // ---------- IMPORTANT: POST without preflight ----------
+  async function postApi(payload){
+    const apiUrl = $("apiUrl").value.trim();
+
+    // Evita preflight CORS: NON usare application/json
+    const r = await fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+
+    return await r.json();
+  }
 
   // table model
   let rows = [];
@@ -543,6 +549,7 @@
     return canPublish;
   }
 
+  // CSV parsing (ENCI)
   function parseCsvText(text){
     const lines = text.replace(/\r/g,"").split("\n").filter(l=>l.trim().length);
     if(!lines.length) return [];
@@ -638,12 +645,7 @@
   $("normalize").addEventListener("click", ()=>{ normalizeOrd(); validate(true); });
   $("validateBtn").addEventListener("click", ()=>validate(true));
 
-  async function postApi(payload){
-    const apiUrl = $("apiUrl").value.trim();
-    const r = await fetch(apiUrl, { method:"POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(payload) });
-    return await r.json();
-  }
-
+  // Online
   async function loadOnline(){
     const apiUrl = $("apiUrl").value.trim();
     const k = keyObj();
@@ -676,7 +678,7 @@
       setStatus("✅ Startlist caricata da online ("+rows.length+" righe).", "ok");
       showTab("t3");
     }catch(e){
-      setStatus("Errore: Failed to fetch / API: " + e.message, "bad");
+      setStatus("Errore (GET): " + e.message, "bad");
     }finally{
       $("loadOnline").disabled = false;
       setApiBadge(!!$("apiUrl").value.trim());
@@ -684,9 +686,10 @@
   }
 
   async function publish(){
-    const apiUrl = $("apiUrl").value.trim();
     const apiKey = $("apiKey").value.trim();
+    const apiUrl = $("apiUrl").value.trim();
     const k = keyObj();
+
     if(!apiUrl){ setStatus("Inserisci URL API (Step 1).", "bad"); showTab("t1"); return; }
     if(!apiKey){ setStatus("Inserisci API_KEY (Step 1).", "bad"); showTab("t1"); return; }
     if(!k.data||!k.evento||!k.classe||!k.categoria){ setStatus("Completa evento (Step 2).", "bad"); showTab("t2"); return; }
@@ -711,10 +714,11 @@
 
       const payload = { key: apiKey, action:"startlist_set", data:k.data, evento:k.evento, classe:k.classe, categoria:k.categoria, items };
       const j = await postApi(payload);
+
       if(j && j.ok) setStatus("✅ Pubblicato online con successo.", "ok");
       else setStatus("Errore pubblicazione: " + (j.error || "unknown"), "bad");
     }catch(e){
-      setStatus("Errore rete/API: " + e.message, "bad");
+      setStatus("Errore (POST): " + e.message, "bad");
     }finally{
       $("publish").disabled = false;
       validate(false);
@@ -724,7 +728,7 @@
   $("loadOnline").addEventListener("click", loadOnline);
   $("publish").addEventListener("click", publish);
 
-  // modal list_eventi
+  // Modal list_eventi
   function openModal(on){ $("modal").style.display = on ? "" : "none"; }
   $("closeList").addEventListener("click", ()=>openModal(false));
 
