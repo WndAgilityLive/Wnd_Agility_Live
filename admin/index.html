@@ -181,7 +181,7 @@
 
     <div class="card" id="t1">
       <div class="hd">
-        <div><div class="h">Connessione API</div><div class="sub">GET/POST compatibili con googleusercontent ✅</div></div>
+        <div><div class="h">Connessione API</div><div class="sub">Inserisci API_KEY solo qui (non pubblica)</div></div>
         <div class="row">
           <button class="btn" id="testApi">Test</button>
           <button class="btn" id="saveApi">Salva</button>
@@ -197,6 +197,9 @@
             <label>API_KEY (Apps Script)</label>
             <input id="apiKey" type="password" placeholder="API_KEY" />
           </div>
+        </div>
+        <div class="hint" style="margin-top:10px">
+          Lista eventi usa GET (<span class="mono">action=list_eventi</span>). Publish invia POST <span class="mono">no-cors</span> e verifica con GET.
         </div>
         <div class="footerNav">
           <span class="hint">Step 1 di 4</span>
@@ -225,8 +228,10 @@
             </select>
           </div>
         </div>
+
         <div class="hint" style="margin-top:10px">Chiave evento:</div>
         <div class="mono" id="keyPreview" style="margin-top:6px;font-weight:950">—</div>
+
         <div class="footerNav">
           <button class="btn ghost" id="back2">← Indietro</button>
           <div class="hint">Step 2 di 4</div>
@@ -300,7 +305,7 @@
         <div><div class="h">Online</div><div class="sub">Lista eventi • Carica • Pubblica</div></div>
         <div class="row">
           <button class="btn" id="openList">Lista eventi</button>
-          <button class="btn" id="loadOnline">Carica online</button>
+          <button class="btn" id="loadOnlineBtn">Carica online</button>
           <button class="btn" id="validateBtn">Valida</button>
           <button class="btn primary" id="publish">Metti online</button>
         </div>
@@ -308,7 +313,7 @@
       <div class="bd">
         <div class="status" id="status">Pronto.</div>
         <div class="hint" style="margin-top:12px">
-          Carica online: apre la lista, selezioni evento → compila e carica automaticamente.
+          Carica online: seleziona evento → compila e carica → vai su Startlist.
         </div>
         <div class="footerNav">
           <button class="btn ghost" id="back4">← Indietro</button>
@@ -386,7 +391,7 @@
     else { dot.className="dot bad"; txt.textContent="API non configurata"; }
   }
 
-  // URL builder (FIX per googleusercontent con query già presente)
+  // URL builder (fix for googleusercontent)
   function buildGetUrl(apiUrl, params){
     const u = new URL(apiUrl);
     Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, v));
@@ -394,7 +399,7 @@
     return u.toString();
   }
 
-  // config local
+  // config local (do NOT hardcode apiKey)
   function loadCfg(){
     const savedUrl = localStorage.getItem("ds_apiUrl");
     if(savedUrl && savedUrl.trim()) $("apiUrl").value = savedUrl.trim();
@@ -428,12 +433,12 @@
   $("genKey").addEventListener("click", ()=>{ saveCfg(); updatePreview(); });
   ["data","evento","classe","categoria"].forEach(id=> $(id).addEventListener(id==="categoria" ? "change" : "input", updatePreview));
 
-  // Test API (GET)
+  // GET test
   async function testApi(){
     const apiUrl = $("apiUrl").value.trim();
     if(!apiUrl){ setApiBadge(false); setStatus("Inserisci URL API.", "bad"); return false; }
     setApiBadge(true,true);
-    setStatus("Test connessione API...", "wait");
+    setStatus("Test API...", "wait");
     try{
       const u = buildGetUrl(apiUrl, { data:"PING", evento:"PING", classe:"PING", categoria:"PING" });
       const r = await fetch(u, {cache:"no-store"});
@@ -444,19 +449,17 @@
       setApiBadge(false); setStatus("⛔ Failed to fetch: " + e.message, "bad"); return false;
     }
   }
-
   $("testApi").addEventListener("click", testApi);
   $("saveApi").addEventListener("click", async ()=>{ saveCfg(); await testApi(); });
 
-  // ✅ POST without preflight
-  async function postApi(payload){
-    const apiUrl = $("apiUrl").value.trim();
-    const r = await fetch(apiUrl, {
+  // POST no-cors (cannot read response)
+  async function postNoCors(apiUrl, payload){
+    await fetch(apiUrl, {
       method: "POST",
+      mode: "no-cors",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(payload)
     });
-    return await r.json();
   }
 
   // table model
@@ -549,9 +552,8 @@
     return canPublish;
   }
 
-  // CSV parsing (ENCI)
   function parseCsvText(text){
-    const lines = text.replace(/\r/g,"").split("\n").filter(l=>l.trim().length);
+    const lines = text.replace(/\\r/g,"").split("\\n").filter(l=>l.trim().length);
     if(!lines.length) return [];
     const sample = lines[0];
     const delim = (sample.split(";").length > sample.split(",").length) ? ";" : ",";
@@ -645,22 +647,34 @@
   $("normalize").addEventListener("click", ()=>{ normalizeOrd(); validate(true); });
   $("validateBtn").addEventListener("click", ()=>validate(true));
 
-  // Modal list_eventi + UX richiesta
+  // modal
   function openModal(on){ $("modal").style.display = on ? "" : "none"; }
   $("closeList").addEventListener("click", ()=>openModal(false));
 
   let cacheList = [];
   let autoLoadAfterSelect = false;
 
-  async function refreshList(){
-    const apiKey = $("apiKey").value.trim();
+  // ✅ list_eventi via GET
+  async function fetchEventi(){
     const apiUrl = $("apiUrl").value.trim();
+    const apiKey = $("apiKey").value.trim();
+    const u = new URL(apiUrl);
+    u.searchParams.set("action","list_eventi");
+    u.searchParams.set("key", apiKey);
+    u.searchParams.set("t", String(Date.now()));
+    const r = await fetch(u.toString(), { cache:"no-store" });
+    return await r.json();
+  }
+
+  async function refreshList(){
+    const apiUrl = $("apiUrl").value.trim();
+    const apiKey = $("apiKey").value.trim();
     if(!apiUrl){ setStatus("Inserisci URL API (Step 1).", "bad"); showTab("t1"); return; }
     if(!apiKey){ setStatus("Inserisci API_KEY (Step 1).", "bad"); showTab("t1"); return; }
 
     $("listTb").innerHTML = `<tr><td colspan="5" class="muted">Caricamento...</td></tr>`;
     try{
-      const j = await postApi({ key: apiKey, action:"list_eventi" });
+      const j = await fetchEventi();
       if(j && j.ok){
         cacheList = Array.isArray(j.items) ? j.items : [];
         renderList();
@@ -702,10 +716,10 @@
 
         if(autoLoadAfterSelect){
           autoLoadAfterSelect = false;
-          await loadOnline();     // carica subito
-          showTab("t3");          // vai a Startlist
+          await loadOnline();
+          showTab("t3");
         }else{
-          showTab("t2");          // solo compilazione evento
+          showTab("t2");
           setStatus("Evento selezionato.", "ok");
         }
       });
@@ -715,7 +729,6 @@
   $("listQ").addEventListener("input", renderList);
   $("refreshList").addEventListener("click", refreshList);
 
-  // ✅ Lista eventi: solo mostra lista
   $("openList").addEventListener("click", async ()=>{
     autoLoadAfterSelect = false;
     $("modalTitle").textContent = "Lista Eventi";
@@ -723,30 +736,24 @@
     await refreshList();
   });
 
-  // ✅ Carica online: mostra lista e poi auto-load dopo selezione
-  $("loadOnline").addEventListener("click", async ()=>{
+  $("loadOnlineBtn").addEventListener("click", async ()=>{
     autoLoadAfterSelect = true;
     $("modalTitle").textContent = "Seleziona evento da caricare";
     openModal(true);
     await refreshList();
   });
 
-  // implementazione loadOnline e publish
   async function loadOnline(){
     const apiUrl = $("apiUrl").value.trim();
     const k = keyObj();
-    if(!apiUrl){ setStatus("Inserisci URL API (Step 1).", "bad"); showTab("t1"); return; }
-    if(!k.data||!k.evento||!k.classe||!k.categoria){ setStatus("Completa evento (Step 2).", "bad"); showTab("t2"); return; }
-
     setApiBadge(true,true);
-    setStatus("Caricamento da online...", "wait");
-
+    setStatus("Caricamento startlist...", "wait");
     try{
       const url = buildGetUrl(apiUrl, k);
       const r = await fetch(url, {cache:"no-store"});
       const j = await r.json();
       const list = Array.isArray(j.startlist) ? j.startlist : [];
-      if(!list.length){ rows=[]; validate(false); setStatus("Nessuna startlist trovata online.", "bad"); return; }
+      if(!list.length){ rows=[]; validate(false); setStatus("Nessuna startlist trovata.", "bad"); return; }
 
       rows = list.map((x,i)=>({
         "Ordine": String(x["Ordine"] ?? (i+1)),
@@ -768,20 +775,17 @@
     }
   }
 
+  // ✅ Publish: POST no-cors + verify via GET
   async function publish(){
-    const apiKey = $("apiKey").value.trim();
     const apiUrl = $("apiUrl").value.trim();
+    const apiKey = $("apiKey").value.trim();
     const k = keyObj();
 
-    if(!apiUrl){ setStatus("Inserisci URL API (Step 1).", "bad"); showTab("t1"); return; }
-    if(!apiKey){ setStatus("Inserisci API_KEY (Step 1).", "bad"); showTab("t1"); return; }
-    if(!k.data||!k.evento||!k.classe||!k.categoria){ setStatus("Completa evento (Step 2).", "bad"); showTab("t2"); return; }
-    if(!rows.length){ setStatus("Tabella vuota (Step 3).", "bad"); showTab("t3"); return; }
-
-    saveCfg();
+    if(!apiKey){ setStatus("Inserisci API_KEY.", "bad"); showTab("t1"); return; }
+    if(!rows.length){ setStatus("Tabella vuota.", "bad"); showTab("t3"); return; }
     if(!validate(true)) return;
 
-    setStatus("Invio in corso...", "wait");
+    setStatus("Invio (no-cors) in corso...", "wait");
     try{
       const items = rows.map((r,i)=>({
         "Ordine": Number(r["Ordine"]) || (i+1),
@@ -794,13 +798,18 @@
       }));
 
       const payload = { key: apiKey, action:"startlist_set", ...k, items };
-      const j = await postApi(payload);
-      if(j && j.ok) setStatus("✅ Pubblicato online con successo.", "ok");
-      else setStatus("Errore pubblicazione: " + (j.error || "unknown"), "bad");
+
+      await postNoCors(apiUrl, payload);
+
+      // verifica
+      await loadOnline();
+      if(rows.length){
+        setStatus("✅ Pubblicato online (verificato).", "ok");
+      }else{
+        setStatus("⚠️ Inviato ma non verificato. Controlla chiave evento/sheet.", "wait");
+      }
     }catch(e){
-      setStatus("Errore (POST): " + e.message, "bad");
-    } finally {
-      validate(false);
+      setStatus("Errore publish: " + e.message, "bad");
     }
   }
 
