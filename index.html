@@ -6,106 +6,87 @@
   <title>D.S. CronoAgility — QR</title>
   <style>
     body{font-family:system-ui,Arial;margin:16px;max-width:980px}
-    .brand{display:flex;gap:12px;align-items:center;margin-bottom:12px}
-    .brand img{width:52px;height:52px;border-radius:14px;border:1px solid #eee;object-fit:cover}
-    .t{font-weight:950;font-size:22px}
-    .s{opacity:.7}
-    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
+    .header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+    .header img{width:48px;height:48px;border-radius:12px;border:1px solid #e6e6e6;object-fit:cover}
+    .title{font-weight:900;font-size:22px;line-height:1}
+    .subtitle{opacity:.7;font-size:12px;margin-top:4px}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin-top:12px}
     label{font-size:13px;opacity:.8}
-    input,select{padding:10px 12px;border:1px solid #ddd;border-radius:12px;font-size:15px}
-    .btn{border:1px solid #ddd;border-radius:12px;padding:10px 14px;background:#fff;cursor:pointer}
+    input,select{padding:10px 12px;border:1px solid #e6e6e6;border-radius:12px;font-size:15px}
+    .btn{border:1px solid #e6e6e6;border-radius:12px;padding:10px 14px;background:#fff;cursor:pointer}
     .mono{font-family:ui-monospace,Menlo,monospace;word-break:break-all}
-    img.qr{max-width:260px;border:1px solid #eee;border-radius:12px}
+    .muted{opacity:.65}
+    img.qr{max-width:260px;border:1px solid #e6e6e6;border-radius:12px}
   </style>
 </head>
 <body>
-  <div class="brand">
+
+  <div class="header">
     <img src="assets/logo.png" alt="D.S. CronoAgility" />
     <div>
-      <div class="t">D.S. CronoAgility</div>
-      <div class="s">Generatore Link & QR (campi coerenti CSV)</div>
+      <div class="title">D.S. CronoAgility</div>
+      <div class="subtitle">Generatore Link & QR • Data/Evento/Classe/Categoria</div>
     </div>
   </div>
 
   <div class="row">
     <div>
-      <label>Data</label><br/>
-      <input id="date" type="date" />
+      <label>Data (DD-MM-YYYY)</label><br/>
+      <input id="data" placeholder="04-03-2026" />
     </div>
     <div>
-      <label>Tipo Evento</label><br/>
-      <input id="event" placeholder="Why not Dog" />
+      <label>Evento</label><br/>
+      <input id="evento" placeholder="agility1" />
     </div>
     <div>
       <label>Classe</label><br/>
-      <input id="classe" placeholder="Es. Agility 1" />
+      <input id="classe" placeholder="1 Assoluti" />
     </div>
     <div>
       <label>Categoria</label><br/>
-      <select id="cat">
+      <select id="categoria">
         <option value="Small">Small</option>
         <option value="Medium">Medium</option>
         <option value="Intermedium">Intermedium</option>
         <option value="Large">Large</option>
       </select>
     </div>
-    <div>
-      <label>Categoria manuale</label><br/>
-      <input id="catCustom" placeholder="(opzionale)" />
-    </div>
     <button class="btn" id="gen">Genera</button>
   </div>
 
-  <p class="s" style="margin-top:14px">Chiave gara:</p>
-  <div class="mono" id="garaName">—</div>
-
-  <p class="s" style="margin-top:14px">Link partecipanti:</p>
+  <p class="muted" style="margin-top:14px">Link live:</p>
   <div class="mono" id="liveUrl">—</div>
 
-  <p style="margin-top:12px"><img class="qr" id="qr" alt="QR" /></p>
+  <p class="muted" style="margin-top:14px">QR:</p>
+  <p><img class="qr" id="qr" alt="QR" /></p>
 
 <script>
   const $ = (id)=>document.getElementById(id);
-  const pad = (n)=>String(n).padStart(2,'0');
 
-  function formatDDMMYYYY(iso){
-    const [y,m,d] = iso.split("-");
-    return `${d}-${m}-${y}`;
-  }
-  function getCategoria(){
-    const c = ($("catCustom").value||"").trim().replace(/\s+/g," ");
-    return c || $("cat").value.trim();
-  }
-  function garaKey(){
-    const iso = $("date").value.trim();
-    const ev = ($("event").value||"").trim().replace(/\s+/g," ");
-    const cl = ($("classe").value||"").trim().replace(/\s+/g," ");
-    const ca = getCategoria();
-    if(!iso || !ev || !cl || !ca) return "";
-    return `${formatDDMMYYYY(iso)} ${ev} ${cl} ${ca}`;
-  }
   function build(){
-    const g = garaKey();
-    $("garaName").textContent = g || "—";
-    if(!g){ $("liveUrl").textContent="—"; $("qr").src=""; return; }
-
+    const data = ($("data").value||"").trim();
+    const evento = ($("evento").value||"").trim();
+    const classe = ($("classe").value||"").trim();
+    const categoria = ($("categoria").value||"").trim();
+    if(!data || !evento || !classe || !categoria){
+      $("liveUrl").textContent = "—";
+      $("qr").src = "";
+      return;
+    }
     const base = new URL(location.href);
     base.pathname = base.pathname.replace(/\/[^\/]*$/, "/");
     const live = new URL("live/", base);
-    live.searchParams.set("gara", g);
-    live.searchParams.set("cat", getCategoria());
+    live.searchParams.set("data", data);
+    live.searchParams.set("evento", evento);
+    live.searchParams.set("classe", classe);
+    live.searchParams.set("categoria", categoria);
+
     $("liveUrl").textContent = live.toString();
     $("qr").src = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(live.toString())}`;
   }
 
-  (function init(){
-    const d = new Date();
-    $("date").value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    $("event").value = "agility1";
-    $("classe").value = "1 Assoluti";
-    build();
-  })();
   $("gen").addEventListener("click", build);
 </script>
+
 </body>
 </html>
