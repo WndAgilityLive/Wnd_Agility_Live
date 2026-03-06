@@ -153,8 +153,23 @@
     .tag{display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background: rgba(0,0,0,.20);color: var(--muted);font-size:12px;font-weight:900}
     .footerNav{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px}
 
-    .modalOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);z-index:9999;}
-    .modalBox{max-width:900px;margin:6vh auto;background:rgba(12,16,32,.98);border:1px solid rgba(255,255,255,.12);border-radius:18px;box-shadow:0 18px 40px rgba(0,0,0,.55);overflow:hidden;}
+    .modalOverlay{
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.55);
+      backdrop-filter:blur(6px);
+      z-index:9999;
+    }
+    .modalBox{
+      max-width:900px;
+      margin:6vh auto;
+      background:rgba(12,16,32,.98);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:18px;
+      box-shadow:0 18px 40px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
     .modalHd{display:flex;justify-content:space-between;align-items:center;padding:14px;border-bottom:1px solid rgba(255,255,255,.10);}
     .modalBd{padding:14px;}
   </style>
@@ -181,7 +196,10 @@
 
     <div class="card" id="t1">
       <div class="hd">
-        <div><div class="h">Connessione API</div><div class="sub">Inserisci API_KEY solo qui (non pubblica)</div></div>
+        <div>
+          <div class="h">Connessione API</div>
+          <div class="sub">Inserisci solo la API_KEY. L’URL è già preimpostato.</div>
+        </div>
         <div class="row">
           <button class="btn" id="testApi">Test</button>
           <button class="btn" id="saveApi">Salva</button>
@@ -190,16 +208,13 @@
       <div class="bd">
         <div class="row">
           <div class="col">
-            <label>URL API (googleusercontent)</label>
+            <label>URL API</label>
             <input id="apiUrl" value="https://script.googleusercontent.com/macros/echo?user_content_key=AY5xjrS3dZOrJuC2Y8cmes2GXauClEG0DzPg1M5n1HlCLJy5Ye6XZk1Z1d-AknZpWlsms2JSj-CkjTSuGSav_HwMdCkdEOqPGihRp61tCs-P0MVlTif3u90RrqY4-GVBS4jPTmhqjMEl8uQ7HyluYa9iMrhsUpZ-yK0YENpjyt6mRKjgTMdxrLzfYt49DqQ5SLHSfA3ez5uo8BZEXEhqS21Z1R0WR1zBysrItuW8wKEIWnVQb_0PZVa4V1kAIostvEvDQjnb9oFF3wT9TUn1u7I1cfohrvwQM6XNd7cG_VgBMqsaDQ9pmxCr6NVFm5hb-ZiLQ-tRip56WcoliIiV-usPMJtG80NFgHKicHfK1_RQ&lib=MoQEIKQJr1pOBA9Hp5bFT2xNrVEl51b0O" />
           </div>
           <div class="col sm">
-            <label>API_KEY (Apps Script)</label>
+            <label>API_KEY</label>
             <input id="apiKey" type="password" placeholder="API_KEY" />
           </div>
-        </div>
-        <div class="hint" style="margin-top:10px">
-          Lista eventi usa GET (<span class="mono">action=list_eventi</span>). Publish invia POST <span class="mono">no-cors</span> e verifica con GET.
         </div>
         <div class="footerNav">
           <span class="hint">Step 1 di 4</span>
@@ -210,14 +225,17 @@
 
     <div class="card" id="t2" style="display:none">
       <div class="hd">
-        <div><div class="h">Evento</div><div class="sub">Data + Evento + Classe + Categoria</div></div>
+        <div>
+          <div class="h">Evento</div>
+          <div class="sub">Data + Evento + Classe + Categoria</div>
+        </div>
         <button class="btn" id="genKey">Mostra chiave</button>
       </div>
       <div class="bd">
         <div class="row">
-          <div class="col xs"><label>Data (DD-MM-YYYY)</label><input id="data" placeholder="04-03-2026" /></div>
-          <div class="col"><label>Evento</label><input id="evento" placeholder="agility1" /></div>
-          <div class="col xs"><label>Classe</label><input id="classe" placeholder="1 Assoluti" /></div>
+          <div class="col xs"><label>Data (DD-MM-YYYY)</label><input id="data" placeholder="05-03-2026" /></div>
+          <div class="col"><label>Evento</label><input id="evento" placeholder="Why not Dog" /></div>
+          <div class="col xs"><label>Classe</label><input id="classe" placeholder="Agility 2" /></div>
           <div class="col xs">
             <label>Categoria</label>
             <select id="categoria">
@@ -242,7 +260,10 @@
 
     <div class="card" id="t3" style="display:none">
       <div class="hd">
-        <div><div class="h">Startlist</div><div class="sub">Import CSV ENCI e modifica</div></div>
+        <div>
+          <div class="h">Startlist</div>
+          <div class="sub">Import CSV ENCI e modifica</div>
+        </div>
         <div class="row">
           <input id="file" type="file" accept=".csv,text/csv" style="max-width:260px"/>
           <button class="btn" id="pasteBtn">Incolla CSV</button>
@@ -302,7 +323,10 @@
 
     <div class="card" id="t4" style="display:none">
       <div class="hd">
-        <div><div class="h">Online</div><div class="sub">Lista eventi • Carica • Pubblica</div></div>
+        <div>
+          <div class="h">Online</div>
+          <div class="sub">Lista eventi • Carica • Pubblica</div>
+        </div>
         <div class="row">
           <button class="btn" id="openList">Lista eventi</button>
           <button class="btn" id="loadOnlineBtn">Carica online</button>
@@ -313,7 +337,7 @@
       <div class="bd">
         <div class="status" id="status">Pronto.</div>
         <div class="hint" style="margin-top:12px">
-          Carica online: seleziona evento → compila e carica → vai su Startlist.
+          Carica online: seleziona evento → compila i campi → carica la startlist → vai su Startlist.
         </div>
         <div class="footerNav">
           <button class="btn ghost" id="back4">← Indietro</button>
@@ -333,7 +357,7 @@
           <div class="row" style="align-items:center;margin-bottom:10px;">
             <div class="col">
               <label>Cerca</label>
-              <input id="listQ" placeholder="Es. 04-03-2026 oppure agility1 oppure Assoluti..." />
+              <input id="listQ" placeholder="Es. 05-03-2026 oppure Why not Dog oppure Agility 2..." />
             </div>
             <div style="align-self:flex-end">
               <button class="btn" id="refreshList">Aggiorna</button>
@@ -351,21 +375,24 @@
         </div>
       </div>
     </div>
-
   </div>
 
 <script>
   const $ = (id)=>document.getElementById(id);
-  function esc(s){ return String(s ?? "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-  // tabs
+  function esc(s){
+    return String(s ?? "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
   const tabs = Array.from(document.querySelectorAll(".tab"));
   const panelIds = ["t1","t2","t3","t4"];
+
   function showTab(id){
     tabs.forEach(t=>t.classList.toggle("active", t.dataset.tab===id));
     panelIds.forEach(pid => $(pid).style.display = (pid===id) ? "" : "none");
     window.scrollTo({top:0,behavior:"smooth"});
   }
+
   tabs.forEach(t=>t.addEventListener("click", ()=>showTab(t.dataset.tab)));
   $("next1").addEventListener("click", ()=>showTab("t2"));
   $("back2").addEventListener("click", ()=>showTab("t1"));
@@ -374,7 +401,6 @@
   $("next3").addEventListener("click", ()=>showTab("t4"));
   $("back4").addEventListener("click", ()=>showTab("t3"));
 
-  // status + badge
   function setStatus(msg, type){
     const el = $("status");
     el.textContent = msg;
@@ -383,6 +409,7 @@
     else if(type==="bad") el.classList.add("bad");
     else if(type==="wait") el.classList.add("wait");
   }
+
   function setApiBadge(ok, wait=false){
     const dot = $("apiDot");
     const txt = $("apiTxt");
@@ -391,7 +418,6 @@
     else { dot.className="dot bad"; txt.textContent="API non configurata"; }
   }
 
-  // URL builder (fix for googleusercontent)
   function buildGetUrl(apiUrl, params){
     const u = new URL(apiUrl);
     Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, v));
@@ -399,7 +425,6 @@
     return u.toString();
   }
 
-  // config local (do NOT hardcode apiKey)
   function loadCfg(){
     const savedUrl = localStorage.getItem("ds_apiUrl");
     if(savedUrl && savedUrl.trim()) $("apiUrl").value = savedUrl.trim();
@@ -413,6 +438,7 @@
     setApiBadge(!!$("apiUrl").value.trim());
     updatePreview();
   }
+
   function saveCfg(){
     localStorage.setItem("ds_apiUrl", $("apiUrl").value.trim());
     localStorage.setItem("ds_apiKey", $("apiKey").value.trim());
@@ -424,16 +450,26 @@
   }
 
   function keyObj(){
-    return { data: $("data").value.trim(), evento: $("evento").value.trim(), classe: $("classe").value.trim(), categoria: $("categoria").value.trim() };
+    return {
+      data: $("data").value.trim(),
+      evento: $("evento").value.trim(),
+      classe: $("classe").value.trim(),
+      categoria: $("categoria").value.trim()
+    };
   }
+
   function updatePreview(){
     const k = keyObj();
-    $("keyPreview").textContent = (k.data && k.evento && k.classe && k.categoria) ? `${k.data} ${k.evento} ${k.classe} ${k.categoria}` : "—";
+    $("keyPreview").textContent = (k.data && k.evento && k.classe && k.categoria)
+      ? `${k.data} ${k.evento} ${k.classe} ${k.categoria}`
+      : "—";
   }
-  $("genKey").addEventListener("click", ()=>{ saveCfg(); updatePreview(); });
-  ["data","evento","classe","categoria"].forEach(id=> $(id).addEventListener(id==="categoria" ? "change" : "input", updatePreview));
 
-  // GET test
+  $("genKey").addEventListener("click", ()=>{ saveCfg(); updatePreview(); });
+  ["data","evento","classe","categoria"].forEach(id=>{
+    $(id).addEventListener(id==="categoria" ? "change" : "input", updatePreview);
+  });
+
   async function testApi(){
     const apiUrl = $("apiUrl").value.trim();
     if(!apiUrl){ setApiBadge(false); setStatus("Inserisci URL API.", "bad"); return false; }
@@ -449,10 +485,10 @@
       setApiBadge(false); setStatus("⛔ Failed to fetch: " + e.message, "bad"); return false;
     }
   }
+
   $("testApi").addEventListener("click", testApi);
   $("saveApi").addEventListener("click", async ()=>{ saveCfg(); await testApi(); });
 
-  // POST no-cors (cannot read response)
   async function postNoCors(apiUrl, payload){
     await fetch(apiUrl, {
       method: "POST",
@@ -462,7 +498,6 @@
     });
   }
 
-  // table model
   let rows = [];
   let vInfo = { badIdx:new Set(), warnIdx:new Set(), warns:0 };
 
@@ -471,7 +506,10 @@
            !String(r["Concorrente"]||"").trim() &&
            !String(r["Conduttore"]||"").trim();
   }
-  function normalizeOrd(){ rows.forEach((r,i)=> r["Ordine"]=String(i+1)); }
+
+  function normalizeOrd(){
+    rows.forEach((r,i)=> r["Ordine"] = String(i+1));
+  }
 
   function render(){
     $("countTag").textContent = "Righe: " + rows.length;
@@ -479,7 +517,11 @@
     $("warnTag").textContent  = "Warning: " + (vInfo.warns||0);
 
     const tb = $("tb");
-    if(!rows.length){ tb.innerHTML = `<tr><td colspan="8" class="muted">Nessun dato</td></tr>`; return; }
+    if(!rows.length){
+      tb.innerHTML = `<tr><td colspan="8" class="muted">Nessun dato</td></tr>`;
+      return;
+    }
+
     const c=(r,k)=>`<td contenteditable="true" data-k="${k}">${esc(r[k])}</td>`;
     tb.innerHTML = rows.map((r,idx)=>{
       const cls = vInfo.badIdx.has(idx) ? "vBad" : (vInfo.warnIdx.has(idx) ? "vWarn" : "");
@@ -536,7 +578,10 @@
       else seen.set(bib,i);
     });
 
-    rows.forEach((r,i)=>{ const o=String(r["Ordine"]||"").trim(); if(o && !/^\d+$/.test(o)){ warn.add(i); warns++; } });
+    rows.forEach((r,i)=>{
+      const o = String(r["Ordine"]||"").trim();
+      if(o && !/^\d+$/.test(o)){ warn.add(i); warns++; }
+    });
 
     vInfo = { badIdx: bad, warnIdx: warn, warns };
     const canPublish = (bad.size===0) && rows.length>0;
@@ -553,8 +598,9 @@
   }
 
   function parseCsvText(text){
-    const lines = text.replace(/\\r/g,"").split("\\n").filter(l=>l.trim().length);
+    const lines = text.replace(/\r/g,"").split("\n").filter(l=>l.trim().length);
     if(!lines.length) return [];
+
     const sample = lines[0];
     const delim = (sample.split(";").length > sample.split(",").length) ? ";" : ",";
 
@@ -647,14 +693,15 @@
   $("normalize").addEventListener("click", ()=>{ normalizeOrd(); validate(true); });
   $("validateBtn").addEventListener("click", ()=>validate(true));
 
-  // modal
-  function openModal(on){ $("modal").style.display = on ? "" : "none"; }
+  function openModal(on){
+    $("modal").style.display = on ? "block" : "none";
+  }
+
   $("closeList").addEventListener("click", ()=>openModal(false));
 
   let cacheList = [];
   let autoLoadAfterSelect = false;
 
-  // ✅ list_eventi via GET
   async function fetchEventi(){
     const apiUrl = $("apiUrl").value.trim();
     const apiKey = $("apiKey").value.trim();
@@ -746,6 +793,10 @@
   async function loadOnline(){
     const apiUrl = $("apiUrl").value.trim();
     const k = keyObj();
+
+    if(!apiUrl){ setStatus("Inserisci URL API.", "bad"); return; }
+    if(!k.data || !k.evento || !k.classe || !k.categoria){ setStatus("Chiave evento incompleta.", "bad"); return; }
+
     setApiBadge(true,true);
     setStatus("Caricamento startlist...", "wait");
     try{
@@ -753,7 +804,12 @@
       const r = await fetch(url, {cache:"no-store"});
       const j = await r.json();
       const list = Array.isArray(j.startlist) ? j.startlist : [];
-      if(!list.length){ rows=[]; validate(false); setStatus("Nessuna startlist trovata.", "bad"); return; }
+      if(!list.length){
+        rows = [];
+        validate(false);
+        setStatus("Nessuna startlist trovata.", "bad");
+        return;
+      }
 
       rows = list.map((x,i)=>({
         "Ordine": String(x["Ordine"] ?? (i+1)),
@@ -775,7 +831,6 @@
     }
   }
 
-  // ✅ Publish: POST no-cors + verify via GET
   async function publish(){
     const apiUrl = $("apiUrl").value.trim();
     const apiKey = $("apiKey").value.trim();
@@ -801,7 +856,6 @@
 
       await postNoCors(apiUrl, payload);
 
-      // verifica
       await loadOnline();
       if(rows.length){
         setStatus("✅ Pubblicato online (verificato).", "ok");
@@ -815,7 +869,6 @@
 
   $("publish").addEventListener("click", publish);
 
-  // init
   (function init(){
     loadCfg();
     showTab("t1");
