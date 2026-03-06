@@ -5,27 +5,68 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>D.S. CronoAgility — Live</title>
   <style>
-    body{font-family:system-ui,Arial;margin:16px;max-width:1100px}
+    body{
+      font-family:system-ui,Arial;
+      margin:16px;
+      max-width:1100px;
+      transition: box-shadow 0.12s ease, background-color 0.12s ease;
+    }
+
     .header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
     .header img{width:42px;height:42px;border-radius:10px;border:1px solid #e6e6e6;object-fit:cover}
     .title{font-weight:900;font-size:20px;line-height:1}
     .subtitle{opacity:.7;font-size:12px;margin-top:4px}
+
     .top{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
     .pill{padding:10px 12px;border:1px solid #e6e6e6;border-radius:999px;background:#fff}
     .muted{opacity:.65}
     .btn{border:1px solid #e6e6e6;border-radius:12px;padding:10px 14px;background:#fff;cursor:pointer}
     .btn:disabled{opacity:.45;cursor:not-allowed}
     .search{padding:10px 12px;border:1px solid #e6e6e6;border-radius:12px;width:min(420px,100%)}
+
     .card{border:1px solid #e6e6e6;border-radius:18px;padding:14px;margin-top:14px;background:#fff}
     h3{margin:0 0 10px 0;font-size:20px}
     table{width:100%;border-collapse:collapse;font-size:14px}
     th,td{border-bottom:1px solid #f0f0f0;padding:10px 8px;text-align:left}
     th{font-weight:700}
+
     .watchSel{padding:6px 8px;border:1px solid #e6e6e6;border-radius:10px;background:#fff}
     .watchCb{transform:scale(1.15)}
+
+    .flashBanner{
+      position:fixed;
+      left:12px;
+      right:12px;
+      top:12px;
+      z-index:99999;
+      padding:16px 18px;
+      border-radius:16px;
+      font-weight:900;
+      font-size:18px;
+      text-align:center;
+      color:#111;
+      background:#ffe066;
+      border:2px solid rgba(0,0,0,.15);
+      box-shadow:0 10px 28px rgba(0,0,0,.25);
+      display:none;
+    }
+
+    .flashBanner.show{display:block}
+
+    .pulseHighlight{
+      animation: pulseCard 0.7s ease 3;
+    }
+
+    @keyframes pulseCard{
+      0%   { box-shadow: 0 0 0 0 rgba(255,0,0,.00); transform: scale(1); }
+      30%  { box-shadow: 0 0 0 8px rgba(255,0,0,.18); transform: scale(1.01); }
+      100% { box-shadow: 0 0 0 0 rgba(255,0,0,.00); transform: scale(1); }
+    }
   </style>
 </head>
 <body>
+
+  <div id="flashBanner" class="flashBanner">⚠️ CONCORRENTE IN AVVICINAMENTO</div>
 
   <div class="header">
     <img src="../assets/logo.png" alt="D.S. CronoAgility" />
@@ -43,7 +84,7 @@
     <input class="search" id="q" placeholder="Cerca pettorale/nome..." />
   </div>
 
-  <div class="card">
+  <div class="card" id="nextCard">
     <h3>Prossimi a partire</h3>
     <table>
       <thead><tr><th>#</th><th>Pett.</th><th>Conduttore</th><th>Cane</th></tr></thead>
@@ -71,10 +112,14 @@
   </div>
 
 <script>
-  const API_BASE = "https://script.google.com/macros/s/AKfycbz_FENLITYK6HATnjL6y1xUBTKiywrKHqaSCvzU1xWzQRZxK4X8YhUpfCQLY9KuY4x1/exec";
+  const API_BASE = "https://script.googleusercontent.com/macros/echo?user_content_key=AY5xjrS3dZOrJuC2Y8cmes2GXauClEG0DzPg1M5n1HlCLJy5Ye6XZk1Z1d-AknZpWlsms2JSj-CkjTSuGSav_HwMdCkdEOqPGihRp61tCs-P0MVlTif3u90RrqY4-GVBS4jPTmhqjMEl8uQ7HyluYa9iMrhsUpZ-yK0YENpjyt6mRKjgTMdxrLzfYt49DqQ5SLHSfA3ez5uo8BZEXEhqS21Z1R0WR1zBysrItuW8wKEIWnVQb_0PZVa4V1kAIostvEvDQjnb9oFF3wT9TUn1u7I1cfohrvwQM6XNd7cG_VgBMqsaDQ9pmxCr6NVFm5hb-ZiLQ-tRip56WcoliIiV-usPMJtG80NFgHKicHfK1_RQ&lib=MoQEIKQJr1pOBA9Hp5bFT2xNrVEl51b0O";
+
   const $ = (id)=>document.getElementById(id);
 
-  function qs(name){ const u = new URL(location.href); return (u.searchParams.get(name)||"").trim(); }
+  function qs(name){
+    const u = new URL(location.href);
+    return (u.searchParams.get(name)||"").trim();
+  }
 
   function buildGetUrl(apiUrl, params){
     const u = new URL(apiUrl);
@@ -92,68 +137,159 @@
   $("garaLbl").textContent = garaLabel || "-";
   $("catLbl").textContent  = categoria || "-";
 
-  function esc(s){ return String(s??"").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+  function esc(s){
+    return String(s??"").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
   function norm(s){ return String(s||"").toLowerCase(); }
 
-  const LS_WATCH="ds_watch_map_v1", LS_FIRED="ds_watch_fired_v1";
-  const loadObj=(k)=>{ try{return JSON.parse(localStorage.getItem(k)||"{}")}catch(e){return{}} };
-  const saveObj=(k,o)=>localStorage.setItem(k,JSON.stringify(o));
-  const loadSet=(k)=>{ try{return new Set(JSON.parse(localStorage.getItem(k)||"[]"))}catch(e){return new Set()} };
-  const saveSet=(k,s)=>localStorage.setItem(k,JSON.stringify(Array.from(s)));
+  const LS_WATCH = "ds_watch_map_v1";
+  const LS_FIRED = "ds_watch_fired_v1";
+
+  function loadObj(key){
+    try{ return JSON.parse(localStorage.getItem(key) || "{}"); }
+    catch(e){ return {}; }
+  }
+  function saveObj(key, obj){
+    localStorage.setItem(key, JSON.stringify(obj));
+  }
+  function loadSet(key){
+    try{ return new Set(JSON.parse(localStorage.getItem(key) || "[]")); }
+    catch(e){ return new Set(); }
+  }
+  function saveSet(key, set){
+    localStorage.setItem(key, JSON.stringify(Array.from(set)));
+  }
 
   let watchedMap = loadObj(LS_WATCH);
   let fired = loadSet(LS_FIRED);
 
-  function beep(){
-    try{
-      const ctx = new (window.AudioContext||window.webkitAudioContext)();
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.type="sine"; o.frequency.value=880; g.gain.value=0.08;
-      o.connect(g); g.connect(ctx.destination);
-      o.start(); setTimeout(()=>{o.stop();ctx.close()},250);
-    }catch(e){}
-    if(navigator.vibrate) navigator.vibrate([120,60,120]);
+  function showVisualAlert(){
+    const banner = $("flashBanner");
+    const nextCard = $("nextCard");
+
+    banner.classList.add("show");
+    nextCard.classList.remove("pulseHighlight");
+    void nextCard.offsetWidth;
+    nextCard.classList.add("pulseHighlight");
+
+    document.body.style.boxShadow = "inset 0 0 0 10px rgba(255,0,0,0.75)";
+    document.body.style.backgroundColor = "rgba(255,240,240,0.65)";
+
+    setTimeout(()=>{
+      document.body.style.boxShadow = "inset 0 0 0 10px rgba(255,196,0,0.85)";
+      document.body.style.backgroundColor = "rgba(255,250,220,0.75)";
+    }, 220);
+
+    setTimeout(()=>{
+      document.body.style.boxShadow = "none";
+      document.body.style.backgroundColor = "";
+      banner.classList.remove("show");
+      nextCard.classList.remove("pulseHighlight");
+    }, 2600);
   }
 
-  let cacheStart=[], cacheRank=[];
+  function beep(){
+    try{
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      function tone(start, duration, freq, gainValue){
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = "square";
+        osc.frequency.value = freq;
+
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(gainValue, start + 0.01);
+        gain.gain.setValueAtTime(gainValue, start + duration - 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(start);
+        osc.stop(start + duration);
+      }
+
+      // 3 cicli distinti, molto più evidenti
+      tone(now + 0.00, 0.22, 1400, 0.75);
+      tone(now + 0.28, 0.22, 1100, 0.75);
+      tone(now + 0.56, 0.28, 1600, 0.80);
+
+      tone(now + 1.10, 0.22, 1400, 0.75);
+      tone(now + 1.38, 0.22, 1100, 0.75);
+      tone(now + 1.66, 0.28, 1600, 0.80);
+
+      tone(now + 2.20, 0.22, 1400, 0.75);
+      tone(now + 2.48, 0.22, 1100, 0.75);
+      tone(now + 2.76, 0.34, 1700, 0.85);
+
+      setTimeout(()=>{ try{ ctx.close(); }catch(e){} }, 3800);
+    }catch(e){}
+
+    if(navigator.vibrate){
+      navigator.vibrate([
+        350,120,350,120,450,
+        200,
+        350,120,350,120,450,
+        200,
+        350,120,350,120,550
+      ]);
+    }
+
+    showVisualAlert();
+  }
+
+  let cacheStart = [];
+  let cacheRank = [];
+
+  function rowMatches(r, q){
+    if(!q) return true;
+    const t = norm(r.bib) + " " + norm(r.conduttore) + " " + norm(r.cane);
+    return t.includes(q);
+  }
 
   function render(){
     const q = norm($("q").value);
 
-    const start = (cacheStart||[]).map(r=>({
-      ord: r["Ordine"] ?? "",
-      bib: r["Numero Pettorale"] ?? "",
-      conduttore: r["Conduttore"] ?? "",
-      cane: r["Concorrente"] ?? ""
-    })).sort((a,b)=>Number(a.ord||0)-Number(b.ord||0)).filter(r=>{
-      const t = (norm(r.bib)+" "+norm(r.conduttore)+" "+norm(r.cane));
-      return !q || t.includes(q);
-    });
+    const start = (cacheStart||[]).map(r => ({
+      ord: r["Ordine"] ?? r.Ordine ?? "",
+      bib: r["Numero Pettorale"] ?? r["NumeroPettorale"] ?? r.bib ?? "",
+      conduttore: r["Conduttore"] ?? r.Conduttore ?? "",
+      cane: r["Concorrente"] ?? r.Concorrente ?? ""
+    })).sort((a,b)=>Number(a.ord||0)-Number(b.ord||0));
 
-    const rank = (cacheRank||[]).map(r=>({
-      pos: r["Pos"] ?? r.pos ?? r["pos"] ?? "",
-      bib: r["Numero Pettorale"] ?? r.bib ?? r["bib"] ?? "",
-      conduttore: r["Conduttore"] ?? r.conduttore ?? "",
-      cane: r["Concorrente"] ?? r.cane ?? "",
-      time: r["Tempo"] ?? r.time ?? "",
-      err: r["Errori"] ?? r.err ?? "",
-      ref: r["Rifiuti"] ?? r.ref ?? "",
-      stato: r["Stato"] ?? r.stato ?? ""
-    })).sort((a,b)=>Number(a.pos||0)-Number(b.pos||0)).filter(r=>{
-      const t = (norm(r.bib)+" "+norm(r.conduttore)+" "+norm(r.cane));
-      return !q || t.includes(q);
-    });
+    const startF = start.filter(r=>rowMatches(r,q));
+
+    const rank = (cacheRank||[]).map(r => ({
+      pos: r.pos ?? r["pos"] ?? "",
+      bib: r.bib ?? r["bib"] ?? r["Numero Pettorale"] ?? "",
+      conduttore: r.conduttore ?? r["conduttore"] ?? r["Conduttore"] ?? "",
+      cane: r.cane ?? r["cane"] ?? r["Concorrente"] ?? "",
+      time: r.time ?? r["time"] ?? r["Tempo"] ?? "",
+      err: r.err ?? r["err"] ?? r["Errori"] ?? "",
+      ref: r.ref ?? r["ref"] ?? r["Rifiuti"] ?? "",
+      stato: r.stato ?? r["stato"] ?? r["Stato"] ?? ""
+    })).sort((a,b)=>Number(a.pos||0)-Number(b.pos||0));
+
+    const rankF = rank.filter(r=>rowMatches(r,q));
 
     const doneBibs = new Set(rank.map(r=>String(r.bib||"").trim()));
-    const queue = start.filter(r=>!doneBibs.has(String(r.bib||"").trim()));
-    const next = queue.slice(0,10);
+    const queue = startF.filter(r=>!doneBibs.has(String(r.bib||"").trim()));
+    const next = queue.slice(0, 10);
 
     for(let i=0;i<queue.length;i++){
-      const bib = String(queue[i].bib||"").trim();
-      const soglia = Number(watchedMap[bib]||0);
-      if(!bib||!soglia) continue;
-      if(i+1 <= soglia && !fired.has(bib)){
-        beep(); fired.add(bib); saveSet(LS_FIRED,fired); break;
+      const bib = String(queue[i].bib || "").trim();
+      const soglia = Number(watchedMap[bib] || 0);
+      if(!bib || !soglia) continue;
+      const pos = i + 1;
+      if(pos <= soglia && !fired.has(bib)){
+        beep();
+        fired.add(bib);
+        saveSet(LS_FIRED, fired);
+        break;
       }
     }
 
@@ -161,8 +297,11 @@
       ? next.map(r=>`<tr><td>${esc(r.ord)}</td><td>${esc(r.bib)}</td><td>${esc(r.conduttore)}</td><td>${esc(r.cane)}</td></tr>`).join("")
       : `<tr><td colspan="4" class="muted">Nessun dato</td></tr>`;
 
-    $("rankTb").innerHTML = rank.length
-      ? rank.map(r=>`<tr><td>${esc(r.pos)}</td><td>${esc(r.bib)}</td><td>${esc(r.conduttore)}</td><td>${esc(r.cane)}</td><td>${esc(r.time)}</td><td>${esc(r.err)}</td><td>${esc(r.ref)}</td><td>${esc(r.stato)}</td></tr>`).join("")
+    $("rankTb").innerHTML = rankF.length
+      ? rankF.map(r=>`<tr>
+          <td>${esc(r.pos)}</td><td>${esc(r.bib)}</td><td>${esc(r.conduttore)}</td><td>${esc(r.cane)}</td>
+          <td>${esc(r.time)}</td><td>${esc(r.err)}</td><td>${esc(r.ref)}</td><td>${esc(r.stato)}</td>
+        </tr>`).join("")
       : `<tr><td colspan="8" class="muted">Nessun dato</td></tr>`;
 
     function watchRowHtml(r){
@@ -170,26 +309,33 @@
       const enabled = bib && (watchedMap[bib] !== undefined);
       const checked = enabled ? "checked" : "";
       const selVal = enabled ? String(watchedMap[bib]) : "10";
+
       return `<tr>
-        <td>${esc(r.ord)}</td><td>${esc(r.bib)}</td><td>${esc(r.conduttore)}</td><td>${esc(r.cane)}</td>
+        <td>${esc(r.ord)}</td>
+        <td>${esc(r.bib)}</td>
+        <td>${esc(r.conduttore)}</td>
+        <td>${esc(r.cane)}</td>
         <td style="text-align:center"><input type="checkbox" class="watchCb" data-bib="${esc(bib)}" ${checked}></td>
-        <td><select class="watchSel" data-bib="${esc(bib)}">
-          <option value="5" ${selVal==="5"?"selected":""}>nei prossimi 5</option>
-          <option value="10" ${selVal==="10"?"selected":""}>nei prossimi 10</option>
-          <option value="15" ${selVal==="15"?"selected":""}>nei prossimi 15</option>
-          <option value="20" ${selVal==="20"?"selected":""}>nei prossimi 20</option>
-        </select></td>
+        <td>
+          <select class="watchSel" data-bib="${esc(bib)}">
+            <option value="5"  ${selVal==="5"?"selected":""}>nei prossimi 5</option>
+            <option value="10" ${selVal==="10"?"selected":""}>nei prossimi 10</option>
+            <option value="15" ${selVal==="15"?"selected":""}>nei prossimi 15</option>
+            <option value="20" ${selVal==="20"?"selected":""}>nei prossimi 20</option>
+          </select>
+        </td>
       </tr>`;
     }
 
-    $("startTb").innerHTML = start.length
-      ? start.map(watchRowHtml).join("")
+    $("startTb").innerHTML = startF.length
+      ? startF.map(watchRowHtml).join("")
       : `<tr><td colspan="6" class="muted">Nessun dato</td></tr>`;
 
     document.querySelectorAll(".watchCb").forEach(cb=>{
       cb.addEventListener("change", ()=>{
         const bib = cb.getAttribute("data-bib");
         if(!bib) return;
+
         if(cb.checked){
           const sel = document.querySelector(`.watchSel[data-bib="${CSS.escape(bib)}"]`);
           watchedMap[bib] = Number(sel ? sel.value : 10);
@@ -202,6 +348,7 @@
         saveSet(LS_FIRED, fired);
       });
     });
+
     document.querySelectorAll(".watchSel").forEach(sel=>{
       sel.addEventListener("change", ()=>{
         const bib = sel.getAttribute("data-bib");
@@ -217,8 +364,13 @@
   }
 
   async function load(){
-    if(!data || !evento || !classe || !categoria){ $("updLbl").textContent="Mancano parametri URL"; return; }
-    const url = buildGetUrl(API_BASE, {data,evento,classe,categoria});
+    if(!data || !evento || !classe || !categoria){
+      $("updLbl").textContent = "Mancano parametri URL";
+      return;
+    }
+
+    const url = buildGetUrl(API_BASE, { data, evento, classe, categoria });
+
     $("refreshBtn").disabled = true;
     try{
       const r = await fetch(url, {cache:"no-store"});
@@ -228,16 +380,18 @@
       $("updLbl").textContent = j.serverTime ? new Date(j.serverTime).toLocaleString() : new Date().toLocaleString();
       render();
     }catch(e){
-      $("updLbl").textContent="Errore caricamento";
+      $("updLbl").textContent = "Errore caricamento";
     }finally{
-      $("refreshBtn").disabled=false;
+      $("refreshBtn").disabled = false;
     }
   }
 
   $("refreshBtn").addEventListener("click", load);
   $("q").addEventListener("input", render);
+
   load();
   setInterval(load, 8000);
 </script>
+
 </body>
 </html>
