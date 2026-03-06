@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>D.S. CronoAgility — Simulatore Web Reale</title>
+  <style>
+    :root{
+      --bg0:#070A12; --bg1:#0B1020;
+      --stroke:rgba(255,255,255,.10);
+      --stroke2:rgba(255,255,255,.16);
+      --text:#EAF0FF;
+      --muted:rgba(234,240,255,.72);
+      --muted2:rgba(234,240,255,.55);
+      --accent:#58D6FF;
+      --good:#2DE38A;
+      --bad:#FF4D6D;
+      --warn:#FFD166;
+      --orange:#ff9f43;
+      --shadow:0 18px 40px rgba(0,0,0,.45);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color:var(--text);
+      background:
+        radial-gradient(900px 500px at 20% 10%, rgba(88,214,255,.16), transparent 60%),
+        radial-gradient(900px 500px at 80% 20%, rgba(108,124,255,.14), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      min-height:100vh;
+    }
+    .wrap{max-width:1440px;margin:0 auto;padding:16px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px;border:1px solid var(--stroke);border-radius:22px;background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));box-shadow:var(--shadow);backdrop-filter:blur(10px)}
+    .brand{display:flex;align-items:center;gap:12px}.logo{width:48px;height:48px;border-radius:14px;border:1px solid rgba(255,255,255,.12);overflow:hidden;background:rgba(255,255,255,.06)}
+    .logo img{width:100%;height:100%;object-fit:cover}.t{font-weight:950;font-size:20px}.s{font-size:12px;color:var(--muted)}
+    .badge{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;border:1px solid var(--stroke2);background:rgba(255,255,255,.05);font-size:12px;color:var(--muted)}
+    .dot{width:8px;height:8px;border-radius:999px;background:var(--muted2);box-shadow:0 0 0 3px rgba(255,255,255,.06)}
+    .dot.ok{background:var(--good);box-shadow:0 0 0 3px rgba(45,227,138,.18)}
+    .dot.wait{background:var(--warn);box-shadow:0 0 0 3px rgba(255,209,102,.18)}
+    .dot.bad{background:var(--bad);box-shadow:0 0 0 3px rgba(255,77,109,.18)}
+    .grid{display:grid;grid-template-columns:1.1fr 1fr 1.15fr;gap:14px;margin-top:14px}
+    .card{border:1px solid var(--stroke);border-radius:22px;background:linear-gradient(180deg, rgba(255,255,255,.065), rgba(255,255,255,.03));box-shadow:var(--shadow);backdrop-filter:blur(10px);overflow:hidden}
+    .hd{padding:14px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:center;gap:10px}.h{font-weight:950;font-size:14px}.sub{font-size:12px;color:var(--muted)}.bd{padding:14px}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:end}.col{min-width:180px;flex:1}
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+    input,select,textarea{width:100%;padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.22);color:var(--text);outline:none}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:var(--text);cursor:pointer;font-weight:900;font-size:13px;min-height:46px}
+    .btn:hover{border-color:rgba(88,214,255,.35);background:rgba(88,214,255,.08)}
+    .btn.primary{border-color:rgba(88,214,255,.55);background:linear-gradient(180deg, rgba(88,214,255,.22), rgba(88,214,255,.10))}
+    .btn.good{border-color:rgba(45,227,138,.45);background:linear-gradient(180deg, rgba(45,227,138,.22), rgba(45,227,138,.08))}
+    .btn.bad{border-color:rgba(255,77,109,.45);background:linear-gradient(180deg, rgba(255,77,109,.20), rgba(255,77,109,.08))}
+    .btn.warn{border-color:rgba(255,209,102,.45);background:linear-gradient(180deg, rgba(255,209,102,.18), rgba(255,209,102,.08))}
+    .btn.orange{border-color:rgba(255,159,67,.45);background:linear-gradient(180deg, rgba(255,159,67,.18), rgba(255,159,67,.08))}
+    .btn.block{width:100%}.btn.ghost{background:transparent}
+    .timer{font-size:56px;font-weight:1000;letter-spacing:1px;line-height:1;padding:18px;border-radius:20px;border:1px solid rgba(88,214,255,.24);text-align:center;background:rgba(0,0,0,.22)}
+    .bigStat{padding:14px;border-radius:18px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.18)}.bigNum{font-size:24px;font-weight:1000}.bigLbl{font-size:12px;color:var(--muted)}
+    .controls{display:grid;grid-template-columns:1fr 1fr;gap:12px}.controls .stack{display:grid;gap:12px}.heroBtn{min-height:82px;font-size:18px;border-radius:20px}
+    table{width:100%;border-collapse:collapse;font-size:13px} th,td{padding:10px 8px;border-bottom:1px solid rgba(255,255,255,.07);text-align:left}
+    th{position:sticky;top:0;background:rgba(7,10,18,.92);backdrop-filter:blur(8px);z-index:1;font-weight:950;color:rgba(234,240,255,.85)}
+    .tblwrap{overflow:auto;max-height:380px;border-radius:16px;border:1px solid rgba(255,255,255,.08)}
+    .currentRow td{background:rgba(88,214,255,.10)!important}.doneRow td{opacity:.68}
+    .tag{display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.20);color:var(--muted);font-size:12px;font-weight:900}
+    .status{padding:10px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.10);background:rgba(0,0,0,.18);font-size:13px;color:var(--muted);white-space:pre-line}
+    .hint{font-size:12px;color:var(--muted2)} .log{max-height:240px;overflow:auto;border-radius:16px;border:1px solid rgba(255,255,255,.08);padding:8px;background:rgba(0,0,0,.16)} .logItem{padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px}
+    .pillBar{display:flex;gap:8px;flex-wrap:wrap}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+    @media (max-width: 1100px){ .grid{grid-template-columns:1fr} .controls{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo"><img src="../assets/logo.png" alt="D.S. CronoAgility"></div>
+        <div><div class="t">D.S. CronoAgility</div><div class="s">Simulatore Web Reale • Usa startlist già online e simula tutta la parte web</div></div>
+      </div>
+      <div class="badge"><span class="dot" id="apiDot"></span><span id="syncLbl">API non configurata</span></div>
+    </div>
+
+    <div class="grid">
+      <section class="card">
+        <div class="hd">
+          <div><div class="h">Configurazione reale</div><div class="sub">Legge la startlist vera già presente online e scrive davvero il ranking sul backend</div></div>
+          <span class="tag mono" id="evtTag">—</span>
+        </div>
+        <div class="bd">
+          <div class="row">
+            <div class="col"><label>API GET (googleusercontent)</label><input id="apiGet" value="https://script.googleusercontent.com/macros/echo?user_content_key=AY5xjrS3dZOrJuC2Y8cmes2GXauClEG0DzPg1M5n1HlCLJy5Ye6XZk1Z1d-AknZpWlsms2JSj-CkjTSuGSav_HwMdCkdEOqPGihRp61tCs-P0MVlTif3u90RrqY4-GVBS4jPTmhqjMEl8uQ7HyluYa9iMrhsUpZ-yK0YENpjyt6mRKjgTMdxrLzfYt49DqQ5SLHSfA3ez5uo8BZEXEhqS21Z1R0WR1zBysrItuW8wKEIWnVQb_0PZVa4V1kAIostvEvDQjnb9oFF3wT9TUn1u7I1cfohrvwQM6XNd7cG_VgBMqsaDQ9pmxCr6NVFm5hb-ZiLQ-tRip56WcoliIiV-usPMJtG80NFgHKicHfK1_RQ&lib=MoQEIKQJr1pOBA9Hp5bFT2xNrVEl51b0O"></div>
+            <div class="col"><label>API POST (exec)</label><input id="apiPost" value="https://script.google.com/macros/s/AKfycbz_FENLITYK6HATnjL6y1xUBTKiywrKHqaSCvzU1xWzQRZxK4X8YhUpfCQLY9KuY4x1/exec"></div>
+          </div>
+          <div class="row" style="margin-top:12px">
+            <div class="col"><label>API_KEY</label><input id="apiKey" type="password" placeholder="API_KEY"></div>
+            <div class="col"><label>Data</label><input id="data" value="05-03-2026"></div>
+            <div class="col"><label>Evento</label><input id="evento" value="Why not Dog"></div>
+            <div class="col"><label>Classe</label><input id="classe" value="Agility 2"></div>
+            <div class="col"><label>Categoria</label><select id="categoria"><option>Small</option><option>Medium</option><option selected>Intermedium</option><option>Large</option></select></div>
+          </div>
+          <div class="row" style="margin-top:12px">
+            <button class="btn" id="saveCfgBtn">Salva config</button>
+            <button class="btn primary" id="testBtn">Test API</button>
+            <button class="btn good" id="loadRealBtn">Carica startlist reale</button>
+            <button class="btn danger" id="resetRemoteBtn">Reset remoto gara</button>
+          </div>
+          <div class="row" style="margin-top:12px">
+            <div class="col"><div class="status">Qui non esiste più nessuna startlist demo. Il simulatore serve a testare il flusso web reale: legge l'evento online già caricato, simula Start/Stop/Errori/Rifiuti/Eliminato e aggiorna il ranking vero che poi il Live legge.</div></div>
+          </div>
+          <div class="status" id="status" style="margin-top:12px">Pronto. Carica la startlist reale online per iniziare la simulazione.</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="hd">
+          <div><div class="h">Centralina simulata</div><div class="sub">Cronometro finto, logica web reale</div></div>
+          <span class="tag" id="phaseTag">In attesa</span>
+        </div>
+        <div class="bd">
+          <div class="timer" id="timerLbl">00.000</div>
+          <div class="row" style="margin-top:12px">
+            <div class="bigStat col"><div class="bigNum" id="currentBib">—</div><div class="bigLbl">Pettorale corrente</div></div>
+            <div class="bigStat col"><div class="bigNum" id="currentHandler">—</div><div class="bigLbl">Conduttore</div></div>
+          </div>
+          <div class="row" style="margin-top:12px">
+            <div class="bigStat col"><div class="bigNum" id="currentDog">—</div><div class="bigLbl">Cane</div></div>
+            <div class="bigStat col"><div class="bigNum" id="currentPen">0 / 0</div><div class="bigLbl">Errori / Rifiuti</div></div>
+          </div>
+          <div class="controls" style="margin-top:12px">
+            <div class="stack">
+              <button class="btn good heroBtn block" id="startBtn">START</button>
+              <button class="btn bad heroBtn block" id="stopBtn">STOP</button>
+            </div>
+            <div class="stack">
+              <button class="btn orange heroBtn block" id="errBtn">ERRORE +1</button>
+              <button class="btn warn heroBtn block" id="refBtn">RIFIUTO +1</button>
+              <button class="btn good heroBtn block" id="elimBtn">ELIMINATO</button>
+            </div>
+          </div>
+          <div class="row" style="margin-top:12px"><button class="btn primary block" id="confirmBtn">CONFERMA RISULTATO</button></div>
+          <div class="row" style="margin-top:12px">
+            <button class="btn" id="prevBtn">◀ Precedente</button>
+            <button class="btn" id="nextBtn">Successivo ▶</button>
+            <button class="btn ghost" id="autoSimBtn">Simula 1 concorrente</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="hd">
+          <div><div class="h">Controllo simulazione</div><div class="sub">Verifica in tempo reale cosa vedrà il Live</div></div>
+          <div class="pillBar"><span class="tag" id="doneTag">Partiti: 0</span><span class="tag" id="remainTag">Restanti: 0</span></div>
+        </div>
+        <div class="bd">
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>#</th><th>Pett.</th><th>Conduttore</th><th>Cane</th><th>Stato</th></tr></thead>
+              <tbody id="previewTb"><tr><td colspan="5" class="hint">Carica la startlist reale</td></tr></tbody>
+            </table>
+          </div>
+          <div class="hd" style="padding-left:0;padding-right:0;margin-top:12px;border-bottom:none"><div><div class="h">Log simulazione</div><div class="sub">Eventi inviati al backend reale</div></div></div>
+          <div class="log" id="logBox"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const CFG_KEY = "ds_real_sim_cfg_v2";
+    const $ = (id) => document.getElementById(id);
+    const state = { event:{data:"05-03-2026",evento:"Why not Dog",classe:"Agility 2",categoria:"Intermedium"}, startlist:[], ranking:[], currentIndex:0, running:false, startedAtMs:0, elapsedMs:0, errori:0, rifiuti:0, eliminato:false, timerHandle:null, logs:[] };
+
+    function escapeHtml(s){ return String(s ?? "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+    function setStatus(msg){ $("status").textContent = msg; }
+    function setApiDot(mode){ const dot=$("apiDot"), lbl=$("syncLbl"); dot.className = "dot " + mode; lbl.textContent = mode === "ok" ? "API configurata" : mode === "wait" ? "API in uso..." : "API non configurata"; }
+    function log(msg){ const ts = new Date().toLocaleTimeString(); state.logs.unshift(`[${ts}] ${msg}`); state.logs = state.logs.slice(0,80); renderLog(); }
+    function renderLog(){ $("logBox").innerHTML = state.logs.length ? state.logs.map(x=>`<div class="logItem">${escapeHtml(x)}</div>`).join("") : `<div class="logItem">Nessun evento.</div>`; }
+
+    function cfg(){ return { apiGet:$("apiGet").value.trim(), apiPost:$("apiPost").value.trim(), apiKey:$("apiKey").value.trim(), data:$("data").value.trim(), evento:$("evento").value.trim(), classe:$("classe").value.trim(), categoria:$("categoria").value.trim() }; }
+    function saveCfg(){ localStorage.setItem(CFG_KEY, JSON.stringify(cfg())); applyEventFromForm(); setApiDot($("apiKey").value.trim() ? "ok" : "bad"); setStatus("Configurazione salvata."); }
+    function loadCfg(){ try{ const c = JSON.parse(localStorage.getItem(CFG_KEY) || "null"); if(!c) return; if(c.apiGet) $("apiGet").value=c.apiGet; if(c.apiPost) $("apiPost").value=c.apiPost; if(c.apiKey) $("apiKey").value=c.apiKey; if(c.data) $("data").value=c.data; if(c.evento) $("evento").value=c.evento; if(c.classe) $("classe").value=c.classe; if(c.categoria) $("categoria").value=c.categoria; }catch(e){} }
+    function buildGetUrl(apiUrl, params){ const u = new URL(apiUrl); Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, v)); u.searchParams.set("t", String(Date.now())); return u.toString(); }
+    function applyEventFromForm(){ const c = cfg(); state.event = { data:c.data, evento:c.evento, classe:c.classe, categoria:c.categoria }; $("evtTag").textContent = `${c.data} • ${c.evento} • ${c.classe} • ${c.categoria}`; }
+
+    async function testApi(){
+      const c = cfg(); if(!c.apiGet || !c.apiKey){ setStatus("Inserisci API GET e API_KEY."); return; }
+      setApiDot("wait");
+      try{
+        const u = new URL(c.apiGet); u.searchParams.set("action","list_eventi"); u.searchParams.set("key", c.apiKey); u.searchParams.set("t", String(Date.now()));
+        const r = await fetch(u.toString(), { cache:"no-store" }); const j = await r.json();
+        if(j && j.ok){ setApiDot("ok"); setStatus(`API OK. Eventi trovati: ${Array.isArray(j.items) ? j.items.length : 0}`); }
+        else { setApiDot("bad"); setStatus("Errore test API: " + (j.error || "unknown")); }
+      }catch(e){ setApiDot("bad"); setStatus("Errore test API: " + e.message); }
+    }
+
+    function currentAthlete(){ return state.startlist[state.currentIndex] || null; }
+    function sortRanking(arr){ return arr.slice().sort((a,b)=>{ const elimA = String(a.Stato||"").toUpperCase()==="ELIMINATO"; const elimB = String(b.Stato||"").toUpperCase()==="ELIMINATO"; if(elimA!==elimB) return elimA?1:-1; const tA=isFinite(parseFloat(a.Tempo))?parseFloat(a.Tempo):999999; const tB=isFinite(parseFloat(b.Tempo))?parseFloat(b.Tempo):999999; if(tA!==tB) return tA-tB; return (Number(a.Errori||0)+Number(a.Rifiuti||0))-(Number(b.Errori||0)+Number(b.Rifiuti||0)); }); }
+
+    function renderPreview(){
+      const rankingBibs = new Set(state.ranking.map(r => String(r["Numero Pettorale"]||"")));
+      if(!state.startlist.length){ $("previewTb").innerHTML = `<tr><td colspan="5" class="hint">Carica la startlist reale</td></tr>`; $("doneTag").textContent="Partiti: 0"; $("remainTag").textContent="Restanti: 0"; return; }
+      $("previewTb").innerHTML = state.startlist.map((r,idx)=>{ const bib=String(r["Numero Pettorale"]||""); const done=rankingBibs.has(bib); const current=idx===state.currentIndex && !done; const status=done?"Classificato":(current?(state.running?"In prova":"Pronto"):"In attesa"); return `<tr class="${current?"currentRow":""} ${done?"doneRow":""}"><td>${escapeHtml(r["Ordine"]||"")}</td><td>${escapeHtml(bib)}</td><td>${escapeHtml(r["Conduttore"]||"")}</td><td>${escapeHtml(r["Concorrente"]||"")}</td><td>${escapeHtml(status)}</td></tr>`; }).join("");
+      $("doneTag").textContent = `Partiti: ${state.ranking.length}`; $("remainTag").textContent = `Restanti: ${Math.max(0, state.startlist.length - state.ranking.length)}`;
+    }
+
+    function renderCurrent(){ applyEventFromForm(); const cur=currentAthlete(); $("currentBib").textContent=cur?(cur["Numero Pettorale"]||"—"):"—"; $("currentHandler").textContent=cur?(cur["Conduttore"]||"—"):"—"; $("currentDog").textContent=cur?(cur["Concorrente"]||"—"):"—"; $("currentPen").textContent=`${state.errori} / ${state.rifiuti}`; $("phaseTag").textContent=state.running?"Cronometro avviato":"In attesa"; renderPreview(); }
+    function formatMs(ms){ return (Math.max(0, ms)/1000).toFixed(3).padStart(6,"0"); }
+    function updateTimer(){ let ms=state.elapsedMs; if(state.running) ms=Date.now()-state.startedAtMs; $("timerLbl").textContent = formatMs(ms); }
+    function stopTimerLoop(){ if(state.timerHandle){ cancelAnimationFrame(state.timerHandle); state.timerHandle=null; } }
+    function startTimerLoop(){ stopTimerLoop(); const tick=()=>{ updateTimer(); if(state.running) state.timerHandle=requestAnimationFrame(tick); }; tick(); }
+    function resetRunFlags(){ state.running=false; state.startedAtMs=0; state.elapsedMs=0; state.errori=0; state.rifiuti=0; state.eliminato=false; stopTimerLoop(); updateTimer(); renderCurrent(); }
+
+    async function verifyOnlineStartlist(){ const c=cfg(); const r=await fetch(buildGetUrl(c.apiGet,{data:c.data,evento:c.evento,classe:c.classe,categoria:c.categoria}), {cache:"no-store"}); const j=await r.json(); return Array.isArray(j.startlist)?j.startlist:[]; }
+    async function verifyOnlineRanking(){ const c=cfg(); const r=await fetch(buildGetUrl(c.apiGet,{data:c.data,evento:c.evento,classe:c.classe,categoria:c.categoria}), {cache:"no-store"}); const j=await r.json(); return Array.isArray(j.ranking)?j.ranking:[]; }
+    async function pushRanking(){ const c=cfg(); if(!c.apiPost || !c.apiKey) throw new Error("API POST o API_KEY mancanti"); const payload={ key:c.apiKey, action:"ranking_set", data:c.data, evento:c.evento, classe:c.classe, categoria:c.categoria, items: sortRanking(state.ranking) }; await fetch(c.apiPost, { method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify(payload) }); }
+    async function clearRemoteRanking(){ const c=cfg(); await fetch(c.apiPost, { method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({ key:c.apiKey, action:"ranking_set", data:c.data, evento:c.evento, classe:c.classe, categoria:c.categoria, items:[] }) }); }
+
+    async function loadReal(){
+      try{
+        setApiDot("wait");
+        const remoteStart = await verifyOnlineStartlist();
+        const remoteRank = await verifyOnlineRanking();
+        state.startlist = remoteStart.map(r=>({"Ordine":String(r["Ordine"]??""),"Numero Pettorale":String(r["Numero Pettorale"]??""),"Concorrente":String(r["Concorrente"]??""),"Razza":String(r["Razza"]??""),"Club":String(r["Club"]??""),"Conduttore":String(r["Conduttore"]??""),"Paese":String(r["Paese"]??"")}));
+        state.ranking = remoteRank.map(r=>({"Ordine":String(r["Ordine"]??""),"Numero Pettorale":String(r["Numero Pettorale"]??""),"Concorrente":String(r["Concorrente"]??""),"Razza":String(r["Razza"]??""),"Club":String(r["Club"]??""),"Conduttore":String(r["Conduttore"]??""),"Paese":String(r["Paese"]??""),"Tempo":String(r["Tempo"]??""),"Errori":Number(r["Errori"]??0),"Rifiuti":Number(r["Rifiuti"]??0),"Stato":String(r["Stato"]??"")}));
+        const doneBibs = new Set(state.ranking.map(r=>String(r["Numero Pettorale"]||"")));
+        let firstPending = state.startlist.findIndex(r => !doneBibs.has(String(r["Numero Pettorale"]||"")));
+        if(firstPending < 0) firstPending = Math.max(0, state.startlist.length - 1);
+        state.currentIndex = firstPending;
+        resetRunFlags();
+        setApiDot("ok");
+        setStatus(`Startlist reale caricata. Startlist: ${remoteStart.length} • Ranking: ${remoteRank.length}`);
+        log("Startlist reale caricata dal backend.");
+      }catch(e){ setApiDot("bad"); setStatus("Errore lettura online: " + e.message); }
+    }
+
+    async function startRun(){ const cur=currentAthlete(); if(!cur){ log("Nessun concorrente selezionato."); return; } if(state.running) return; state.running=true; state.startedAtMs=Date.now()-state.elapsedMs; log(`START pettorale ${cur["Numero Pettorale"]}`); startTimerLoop(); renderCurrent(); }
+    function stopRun(){ if(!state.running) return; state.elapsedMs=Date.now()-state.startedAtMs; state.running=false; stopTimerLoop(); updateTimer(); const cur=currentAthlete(); if(cur) log(`STOP pettorale ${cur["Numero Pettorale"]} a ${formatMs(state.elapsedMs)}`); renderCurrent(); }
+
+    async function confirmRun(){
+      const cur=currentAthlete(); if(!cur){ log("Nessun concorrente da confermare."); return; }
+      if(state.running) stopRun();
+      const row={ "Ordine":cur["Ordine"],"Numero Pettorale":cur["Numero Pettorale"],"Concorrente":cur["Concorrente"],"Razza":cur["Razza"],"Club":cur["Club"],"Conduttore":cur["Conduttore"],"Paese":cur["Paese"],"Tempo":state.eliminato?"":formatMs(state.elapsedMs),"Errori":state.errori,"Rifiuti":state.rifiuti,"Stato":state.eliminato?"ELIMINATO":"OK" };
+      const bib=String(cur["Numero Pettorale"]||"");
+      state.ranking = state.ranking.filter(r => String(r["Numero Pettorale"]||"") !== bib);
+      state.ranking.push(row);
+      log(`CONFERMA pettorale ${bib} • ${row.Stato} • ${row.Tempo || "—"}`);
+      try{
+        setApiDot("wait");
+        await pushRanking();
+        const remote=await verifyOnlineRanking();
+        setApiDot("ok");
+        setStatus(`Ranking pubblicato. Righe online: ${remote.length}`);
+      }catch(e){ setApiDot("bad"); setStatus("Errore publish ranking: " + e.message); }
+      state.currentIndex = Math.min(state.currentIndex + 1, Math.max(0, state.startlist.length - 1));
+      resetRunFlags();
+    }
+
+    function prevAthlete(){ if(!state.startlist.length) return; state.currentIndex=Math.max(0,state.currentIndex-1); resetRunFlags(); log("Selezionato concorrente precedente."); }
+    function nextAthlete(){ if(!state.startlist.length) return; state.currentIndex=Math.min(state.startlist.length-1,state.currentIndex+1); resetRunFlags(); log("Selezionato concorrente successivo."); }
+    async function autoSimOne(){ const cur=currentAthlete(); if(!cur) return; resetRunFlags(); state.errori=Math.random()<0.35?1:0; state.rifiuti=Math.random()<0.20?1:0; state.eliminato=Math.random()<0.08; state.elapsedMs=state.eliminato?0:Math.floor(25000+Math.random()*18000); updateTimer(); renderCurrent(); log(`SIMULA pettorale ${cur["Numero Pettorale"]}`); await confirmRun(); }
+
+    async function resetRemote(){
+      const c=cfg(); if(!confirm("Vuoi davvero azzerare il ranking remoto di questa gara? La startlist resta invariata.")) return;
+      try{ setApiDot("wait"); await clearRemoteRanking(); state.ranking=[]; const doneBibs=new Set(); let firstPending = state.startlist.findIndex(r => !doneBibs.has(String(r["Numero Pettorale"]||""))); if(firstPending<0) firstPending=0; state.currentIndex=firstPending; resetRunFlags(); setApiDot("ok"); setStatus("Ranking remoto azzerato."); log("Ranking remoto azzerato."); }catch(e){ setApiDot("bad"); setStatus("Errore reset remoto: " + e.message); }
+    }
+
+    $("saveCfgBtn").addEventListener("click", saveCfg);
+    $("testBtn").addEventListener("click", testApi);
+    $("loadRealBtn").addEventListener("click", loadReal);
+    $("resetRemoteBtn").addEventListener("click", resetRemote);
+    $("startBtn").addEventListener("click", startRun);
+    $("stopBtn").addEventListener("click", stopRun);
+    $("errBtn").addEventListener("click", ()=>{ state.errori++; renderCurrent(); log("Errore +1"); });
+    $("refBtn").addEventListener("click", ()=>{ state.rifiuti++; renderCurrent(); log("Rifiuto +1"); });
+    $("elimBtn").addEventListener("click", ()=>{ state.eliminato=true; renderCurrent(); log("Concorrente eliminato"); });
+    $("confirmBtn").addEventListener("click", confirmRun);
+    $("prevBtn").addEventListener("click", prevAthlete);
+    $("nextBtn").addEventListener("click", nextAthlete);
+    $("autoSimBtn").addEventListener("click", autoSimOne);
+    ["data","evento","classe","categoria"].forEach(id=> $(id).addEventListener(id === "categoria" ? "change" : "input", renderCurrent));
+
+    loadCfg();
+    renderCurrent();
+    renderLog();
+    updateTimer();
+    setApiDot($("apiKey").value.trim() ? "ok" : "bad");
+    setStatus("Pronto. Carica la startlist reale online e poi simula la gara.");
+  </script>
+</body>
+</html>
